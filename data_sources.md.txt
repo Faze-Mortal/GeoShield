@@ -1,0 +1,11 @@
+| DEM (v2 - full coverage) | NASADEM Merged DEM Global 1 arc second V001, NASA JPL (2021) | https://doi.org/10.5069/G93T9FD9 (via OpenTopography) | EPSG:4326 | ~30m | 2000 survey | 2026-09-12 | Xmin,Ymin: 76.46,30.77 — Xmax,Ymax: 77.85,32.43. ~8,000 km² box covering full Kullu + Mandi districts. Confirmed all 1,377 landslide inventory points fall inside this box. Includes precomputed slope raster. |
+
+| Landslide inventory | GSI Bhusanket landslide inventory report | https://bhusanket.gsi.gov.in/pics/landslide_report.pdf | EPSG:4326 | Point data | Mixed (mostly 2015-2020) | 2026-09-12 | Extracted and filtered to Kullu + Mandi districts from all-India 904-page PDF report. 1,377 events total (970 Mandi, 407 Kullu). Cleaned CSV: landslide_inventory_kullu_mandi.csv |
+
+| Rainfall | Open-Meteo Historical Weather API | https://open-meteo.com/en/docs/historical-weather-api | EPSG:4326 | Daily, 5 point locations | 2015-01-01 to 2026-09-12 | 2026-09-13 | 5 points spread across Kullu+Mandi box (Kullu town, Mandi town, Manali/north edge, Sundernagar/south edge, center). Zero nulls, full daily coverage. Saved as rainfall_kullu_mandi.csv |
+
+| Soil | SoilGrids v2.0 REST API (ISRIC) | https://rest.isric.org/soilgrids/v2.0/ | EPSG:4326 | Point data, 0-5cm depth | 2020 model release | 2026-09-13 | 5 points (same as rainfall locations). Properties: clay, sand, silt, pH, organic carbon, bulk density. Saved as soil_kullu_mandi.csv |
+
+| Population | WorldPop India 2020, Constrained, 100m | https://doi.org/10.5258/SOTON/WP00839 | EPSG:4326 | ~100m | 2020 | 2026-09-13 | Full India GeoTIFF (723.95 MB), not yet cropped to region — will crop to Kullu+Mandi box in Part 3. Citation: Bondarenko M., Priyatikanto R., Tejedor-Garavito N. et al. 2025, WorldPop, DOI:10.5258/SOTON/WP00839 |
+
+| Roads | OpenStreetMap via Overpass API | https://overpass-turbo.eu | EPSG:4326 | Vector (line) | Live OSM snapshot | 2026-09-12 | 29,756 vehicle-usable road segments (trunk/primary/secondary/tertiary/residential/service/track) within Kullu+Mandi box. Pedestrian-only infrastructure excluded. Saved as roads_kullu_mandi.geojson |
