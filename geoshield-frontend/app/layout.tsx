@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Newsreader } from 'next/font/google';
 import './globals.css';
 
 const geistSans = Geist({
@@ -12,10 +12,17 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const newsreader = Newsreader({
+  variable: '--font-serif',
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'GeoShield — Landslide Risk Intelligence',
+  title: 'GeoShield — Landslide Risk Intelligence for Kullu & Mandi',
   description:
-    'Two-layer landslide risk intelligence platform for Kullu and Mandi districts, Himachal Pradesh, India.',
+    'A scientific investigation into mountain landslide susceptibility and empirical rainfall triggers across Kullu and Mandi districts, Himachal Pradesh.',
 };
 
 export default function RootLayout({
@@ -26,9 +33,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      data-scroll-behavior="smooth"
+      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased dark`}
     >
-      <body className="h-full w-full overflow-hidden bg-slate-950 text-slate-100 flex flex-col font-sans">
+      <body className="min-h-full w-full bg-[#090e17] text-slate-100 font-sans">
         {children}
       </body>
     </html>
