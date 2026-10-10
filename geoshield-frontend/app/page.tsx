@@ -73,7 +73,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#090e17] text-slate-100 flex flex-col font-sans selection:bg-sky-500/30 selection:text-white">
+    <div className="relative min-h-screen bg-[#090e17] text-slate-100 flex flex-col font-sans selection:bg-sky-500/30 selection:text-white overflow-x-clip">
       {/* Fixed Header Bar with Brand, Skip link, and Explore CTA */}
       <LandingHeader progress={scrollProgress} />
 
@@ -84,7 +84,7 @@ export default function LandingPage() {
       />
 
       {/* Story Narrative: 8 Chapters */}
-      <main id="story-content" className="flex-1 w-full flex flex-col">
+      <main id="story-content" className="flex-1 w-full flex flex-col overflow-x-clip">
         {/* Chapter 1: The Problem (Hero) */}
         <HeroChapter />
 

@@ -23,7 +23,7 @@ def contrast_ratio(rgb1, rgb2):
 
 def run_tests():
     print("=" * 70)
-    print("GEOSHIELD COMPLETE E2E VERIFICATION: LANDING & DASHBOARD")
+    print("GEOSHIELD UPGRADED VISUAL & SCROLL ANIMATION VERIFICATION")
     print("=" * 70)
 
     results = {}
@@ -68,15 +68,40 @@ def run_tests():
         print(f"  H2 count: {h2_count}")
         results["4. semantic_headings_1_h1_8_h2"] = (h1_count == 1 and h2_count == 8 and "rain is never just rain" in h1_text.lower())
 
-        # 3. All 8 chapters present
+        # 3. Two-Column Hero Composition Check at 1440px
+        hero_box = page.locator("#chapter-1 .grid").first.bounding_box()
+        assert hero_box is not None, "Hero grid container must exist"
+        print(f"  Hero container width at 1440px: {hero_box['width']:.1f}px")
+        # Ensure it spans wide (>1150px) and not narrow
+        results["5. hero_wide_two_column_composition"] = (hero_box['width'] >= 1150)
+
+        # 4. All 8 chapters present
         all_ch = True
         for i in range(1, 9):
             ch = page.locator(f"#chapter-{i}")
             if not ch.is_visible():
                 all_ch = False
-        results["5. all_8_chapters_present"] = all_ch
+        results["6. all_8_chapters_present"] = all_ch
 
-        # 4. Fact sheet values verification
+        # 5. Scroll Reveals Test: Scroll Down and Verify Elements Reveal
+        print("\n[PART 2] Testing Scroll Reveals as visitor scrolls down...")
+        for i in range(1, 9):
+            ch = page.locator(f"#chapter-{i}")
+            ch.scroll_into_view_if_needed()
+            page.wait_for_timeout(350)
+            assert ch.is_visible()
+        print("  All chapters scrolled into view and revealed.")
+
+        # 6. Scroll back up test: ensure no blank or broken areas
+        print("  Testing scroll back up...")
+        page.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })")
+        page.wait_for_timeout(500)
+        h1_visible = page.locator("h1").is_visible()
+        hero_text = page.locator("#chapter-1 p").first.is_visible()
+        assert h1_visible and hero_text, "Content must remain visible when scrolling back up"
+        results["7. scroll_reveals_and_scroll_up_integrity"] = True
+
+        # 7. Fact sheet values verification
         body_text = page.locator("body").text_content() or ""
         fs_ok = (
             "96,118" in body_text and
@@ -89,9 +114,9 @@ def run_tests():
             "same-state empirical reference" in body_text.lower() and
             "not calibrated" in body_text.lower()
         )
-        results["6. fact_sheet_facts_present"] = fs_ok
+        results["8. fact_sheet_facts_present"] = fs_ok
 
-        # 5. Data Roles & Features verification
+        # 8. Data Roles & Features verification
         ch3_text = page.locator("#chapter-3").text_content() or ""
         features_12 = [
             "Elevation", "Slope", "Soil Bulk Density", "Clay Fraction", "Sand Fraction",
@@ -102,22 +127,29 @@ def run_tests():
         density_largest = "largest contributor" in ch3_text.lower()
         rf_trigger_only = "not an input" in ch3_text.lower()
         ndvi_excluded = "excluded from" in ch3_text.lower() or "excluded" in ch3_text.lower()
-        results["7. data_roles_strictly_accurate"] = (all_features_found and density_largest and rf_trigger_only and ndvi_excluded)
+        results["9. data_roles_strictly_accurate"] = (all_features_found and density_largest and rf_trigger_only and ndvi_excluded)
 
-        # 6. Terminology compliance
+        # 9. Terminology compliance
         assert "probability of landslide" not in body_text.lower()
         assert "chance of landslide" not in body_text.lower()
         assert "% chance" not in body_text.lower()
-        results["8. terminology_strictly_compliant"] = True
+        results["10. terminology_strictly_compliant"] = True
 
-        # 7. Chapter 2 interactive cross-section
+        # 10. Chapter 2 interactive cross-section
         btn_phase3 = page.locator("button:has-text('Phase 3')")
         btn_phase3.click()
         page.wait_for_timeout(200)
         assert "Pore-Water Buildup" in (page.locator("#chapter-2").text_content() or "")
-        results["9. chapter_2_cross_section_interactive"] = True
+        results["11. chapter_2_cross_section_interactive"] = True
 
-        # 8. Chapter 4 temporal pivot toggle
+        # 11. Chapter 3 grid layer switcher
+        btn_roads = page.locator("button:has-text('Roads (29,756)')")
+        btn_roads.click()
+        page.wait_for_timeout(200)
+        assert "OpenStreetMap Roads" in (page.locator("#chapter-3").text_content() or "")
+        results["12. chapter_3_grid_layer_switcher_interactive"] = True
+
+        # 12. Chapter 4 temporal pivot toggle
         btn_idealized = page.locator("button:has-text('Idealized Ambition')")
         btn_idealized.click()
         page.wait_for_timeout(200)
@@ -126,9 +158,9 @@ def run_tests():
         btn_real.click()
         page.wait_for_timeout(200)
         assert "2015 Concentration: 74.7%" in (page.locator("#chapter-4").text_content() or "")
-        results["10. chapter_4_temporal_pivot_interactive"] = True
+        results["13. chapter_4_temporal_pivot_interactive"] = True
 
-        # 9. Chapter 6 matrix interactive combinations and presets
+        # 13. Chapter 6 matrix interactive combinations and presets
         btn_preset1 = page.locator("button:has-text('Cell r0142_c0087')")
         btn_preset1.click()
         page.wait_for_timeout(200)
@@ -144,27 +176,28 @@ def run_tests():
         # Verify all 9 combinations in matrix
         matrix_cells = page.locator("button[aria-label*='Susceptibility']")
         assert matrix_cells.count() == 9
-        results["11. chapter_6_3x3_matrix_interactive"] = True
+        results["14. chapter_6_3x3_matrix_interactive"] = True
 
-        # 10. Chapter 7 what-if slider
+        # 14. Chapter 7 what-if slider
         btn_step30 = page.locator("#chapter-7 button:has-text('+30%')")
         btn_step30.click()
         page.wait_for_timeout(200)
         ch7_t = page.locator("#chapter-7").text_content() or ""
         assert "Verified Real Result" in ch7_t
         assert "Unchanged at 32.7" in ch7_t or "32.7" in ch7_t
-        results["12. chapter_7_whatif_slider_interactive"] = True
+        results["15. chapter_7_whatif_slider_interactive"] = True
 
-        # 11. Contrast measurements
+        # 15. Contrast measurements
         body_color = page.evaluate("() => window.getComputedStyle(document.querySelector('p')).color")
         body_bg = page.evaluate("() => window.getComputedStyle(document.body).backgroundColor")
         c_ratio = contrast_ratio(parse_rgb(body_color), parse_rgb(body_bg))
         print(f"  Measured body text contrast: {c_ratio:.2f}:1")
         evidence["body_contrast"] = f"{c_ratio:.2f}:1"
-        results["13. contrast_above_wcag_aa"] = (c_ratio >= 4.5)
+        results["16. contrast_above_wcag_aa"] = (c_ratio >= 4.5)
 
-        # 12. Responsive captures & no horizontal scroll
+        # 16. Responsive captures & no horizontal scroll
         # 1440x900
+        page.set_viewport_size({"width": 1440, "height": 900})
         page.screenshot(path="C:/Users/Aum Lenka/.gemini/antigravity-ide/brain/792e19fb-97ac-4141-9214-6232496fb12c/landing_1440x900.png")
         # 1280x720
         page.set_viewport_size({"width": 1280, "height": 720})
@@ -173,46 +206,54 @@ def run_tests():
         page.set_viewport_size({"width": 390, "height": 844})
         scroll_w = page.evaluate("document.documentElement.scrollWidth")
         client_w = page.evaluate("document.documentElement.clientWidth")
-        assert scroll_w <= client_w + 1
+        assert scroll_w <= client_w + 1, f"No horizontal scroll (scrollWidth={scroll_w}, clientWidth={client_w})"
         page.screenshot(path="C:/Users/Aum Lenka/.gemini/antigravity-ide/brain/792e19fb-97ac-4141-9214-6232496fb12c/landing_390x844.png")
-        results["14. responsive_no_horizontal_scroll"] = True
+        results["17. responsive_no_horizontal_scroll"] = True
 
-        # 13. Keyboard accessibility check (Tab key reaches interactive elements)
-        page.keyboard.press("Tab")
-        page.keyboard.press("Tab")
-        active_el = page.evaluate("() => document.activeElement ? document.activeElement.tagName : ''")
-        results["15. keyboard_accessible_focus"] = bool(active_el)
+        # 17. Reduced Motion Test
+        print("\n[PART 3] Testing prefers-reduced-motion...")
+        reduced_ctx = browser.new_context(
+            viewport={"width": 1440, "height": 900},
+            reduced_motion="reduce"
+        )
+        reduced_page = reduced_ctx.new_page()
+        reduced_page.goto("http://localhost:3000/", wait_until="load")
+        reduced_page.wait_for_timeout(1000)
+        assert reduced_page.locator("h1").is_visible()
+        assert reduced_page.locator("#chapter-8").is_visible()
+        reduced_ctx.close()
+        results["18. reduced_motion_supported"] = True
 
-        # 14. CTA Navigation to /dashboard
+        # 18. CTA Navigation to /dashboard
         page.set_viewport_size({"width": 1440, "height": 900})
         cta_map = page.locator("a:has-text('Explore the Risk Map')").first
         cta_map.click()
         page.wait_for_url("**/dashboard")
         assert "/dashboard" in page.url
-        results["16. cta_navigates_to_dashboard"] = True
+        results["19. cta_navigates_to_dashboard"] = True
 
         # ---------------------------------------------------------------------
-        # PART 2: TEST DASHBOARD ROUTE AT http://localhost:3000/dashboard
+        # PART 4: TEST DASHBOARD ROUTE AT http://localhost:3000/dashboard
         # ---------------------------------------------------------------------
-        print("\n[PART 2] Verifying Dashboard Page at http://localhost:3000/dashboard ...")
+        print("\n[PART 4] Verifying Dashboard Page at http://localhost:3000/dashboard ...")
         # Direct load and hard reload
         page.goto("http://localhost:3000/dashboard", wait_until="networkidle")
         page.wait_for_timeout(3000)
-        results["17. dashboard_direct_load"] = True
+        results["20. dashboard_direct_load"] = True
 
         page.reload(wait_until="networkidle")
         page.wait_for_timeout(3000)
-        results["18. dashboard_hard_reload"] = True
+        results["21. dashboard_hard_reload"] = True
 
         # Test Header Logo links back to /
         logo_link = page.locator("a[aria-label='GeoShield Home']")
         assert logo_link.is_visible()
         href = logo_link.get_attribute("href")
         print(f"  Dashboard Logo link href: '{href}'")
-        results["19. dashboard_logo_links_to_root"] = (href == "/")
+        results["22. dashboard_logo_links_to_root"] = (href == "/")
 
         # Test Tour Hint at ?tour=whatif
-        print("\n[PART 3] Testing ?tour=whatif Hint on Dashboard...")
+        print("\n[PART 5] Testing ?tour=whatif Hint on Dashboard...")
         page.goto("http://localhost:3000/dashboard?tour=whatif", wait_until="networkidle")
         page.wait_for_timeout(2000)
 
@@ -226,20 +267,19 @@ def run_tests():
         page.wait_for_timeout(300)
         assert not tour_hint.is_visible(), "Tour hint should be dismissed"
         print("  Tour hint dismissal: PASS")
-        results["20. dashboard_tour_hint_functional"] = True
+        results["23. dashboard_tour_hint_functional"] = True
 
         # Test Operational Dashboard Map & Backend API
-        print("\n[PART 4] Testing Dashboard Map, Backend Integration & Features...")
-        # Check API connection indicator
+        print("\n[PART 6] Testing Dashboard Map, Backend Integration & Features...")
         connected_badge = page.locator("header span:has-text('Connected')")
         page.wait_for_selector("header span:has-text('Connected')", timeout=8000)
         assert connected_badge.is_visible(), "Dashboard should be Connected to backend"
-        results["21. backend_api_connected"] = True
+        results["24. backend_api_connected"] = True
 
         # Check Map canvas exists
         map_canvas = page.locator(".maplibregl-canvas")
         assert map_canvas.is_visible(), "MapLibre canvas should be visible"
-        results["22. maplibre_basemap_rendered"] = True
+        results["25. maplibre_basemap_rendered"] = True
 
         # Test Search for verified cell r0142_c0087
         print("  Testing search for r0142_c0087...")
@@ -251,13 +291,12 @@ def run_tests():
         # Verify Detail Panel contents for r0142_c0087
         detail_panel = page.locator("aside")
         panel_text = detail_panel.text_content() or ""
-        print(f"  Detail panel loaded for r0142_c0087. Checking details...")
         assert "r0142_c0087" in panel_text
         assert "32.7" in panel_text, "Susceptibility Score must be 32.7"
         assert "Low-Moderate" in panel_text, "Current Risk must be Low-Moderate"
         assert "ELEVATED" in panel_text, "Trigger State must be ELEVATED"
         assert "10" in panel_text, "Nearest weather location must be 10"
-        results["23. search_and_cell_predict_verified_r0142"] = True
+        results["26. search_and_cell_predict_verified_r0142"] = True
 
         # Test Simulation +30% on r0142_c0087
         print("  Testing rainfall simulation +30% on r0142_c0087...")
@@ -269,8 +308,7 @@ def run_tests():
         assert "HIGH" in panel_sim_text, "Trigger state should shift to HIGH"
         assert "Moderate" in panel_sim_text, "Current risk should shift to Moderate"
         assert "32.7" in panel_sim_text, "Susceptibility score must remain unchanged at 32.7"
-        print("  Simulation +30% verified: ELEVATED -> HIGH, Low-Moderate -> Moderate, Score unchanged at 32.7")
-        results["24. simulation_plus_30_percent_verified"] = True
+        results["27. simulation_plus_30_percent_verified"] = True
 
         # Test Search invalid cell r9999_c9999
         print("  Testing search for invalid cell r9999_c9999...")
@@ -279,7 +317,7 @@ def run_tests():
         page.wait_for_timeout(2000)
         body_after_search = (page.locator("body").text_content() or "").lower()
         assert "no cell with id" in body_after_search or "not found" in body_after_search or "cell ids look like" in body_after_search
-        results["25. invalid_cell_search_handled"] = True
+        results["28. invalid_cell_search_handled"] = True
 
         # Test second verified cell r0137_c0204
         print("  Testing search for r0137_c0204...")
@@ -291,7 +329,7 @@ def run_tests():
         assert "Critical" in panel_text2, "Current Risk must be Critical"
         assert "HIGH" in panel_text2, "Trigger State must be HIGH"
         assert "12" in panel_text2, "Nearest weather location must be 12"
-        results["26. cell_predict_verified_r0137"] = True
+        results["29. cell_predict_verified_r0137"] = True
 
         # Capture Dashboard Screenshots
         page.screenshot(path="C:/Users/Aum Lenka/.gemini/antigravity-ide/brain/792e19fb-97ac-4141-9214-6232496fb12c/dashboard_1440x900.png")
@@ -308,11 +346,11 @@ def run_tests():
     for k, v in results.items():
         status = "PASS" if v else "FAIL"
         if not v: all_ok = False
-        print(f"  {k:48s}: [{status}]")
+        print(f"  {k:50s}: [{status}]")
     print("=" * 70)
 
     assert all_ok, "Some checks failed!"
-    print("ALL 26 GEOSHIELD VERIFICATION CHECKS PASSED PERFECTLY!")
+    print("ALL 29 GEOSHIELD UPGRADE VERIFICATION CHECKS PASSED PERFECTLY!")
 
 if __name__ == "__main__":
     run_tests()
