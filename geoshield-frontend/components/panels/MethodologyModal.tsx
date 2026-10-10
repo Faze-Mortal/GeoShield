@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { RISK_MATRIX } from '@/lib/risk';
 import { getRiskStyle } from '@/lib/risk';
 
@@ -10,17 +10,28 @@ interface MethodologyModalProps {
 }
 
 export default function MethodologyModal({ isOpen, onClose }: MethodologyModalProps) {
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
+
     if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
       window.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
+      // Automatically place focus on close button for keyboard users
+      setTimeout(() => closeBtnRef.current?.focus(), 50);
     }
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
     };
   }, [isOpen, onClose]);
 
@@ -49,8 +60,9 @@ export default function MethodologyModal({ isOpen, onClose }: MethodologyModalPr
             </p>
           </div>
           <button
+            ref={closeBtnRef}
             onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="rounded p-1 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400"
             aria-label="Close dialog"
           >
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

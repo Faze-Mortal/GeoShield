@@ -74,7 +74,11 @@ export default function SearchBar({ onSearch, searching, error }: SearchBarProps
       )}
 
       {error && (
-        <div className="mt-1.5 rounded border border-red-500/70 bg-red-950/95 px-2.5 py-1.5 text-xs text-red-100">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mt-1.5 rounded border border-red-500/70 bg-red-950/95 px-2.5 py-1.5 text-xs text-red-100"
+        >
           {error}
         </div>
       )}

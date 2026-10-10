@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import LandingHeader from '@/components/landing/LandingHeader';
 import ChapterRail, { CHAPTERS } from '@/components/landing/ChapterRail';
 import HeroChapter from '@/components/landing/HeroChapter';
@@ -84,7 +85,7 @@ export default function LandingPage() {
       />
 
       {/* Story Narrative: 8 Chapters */}
-      <main id="story-content" className="flex-1 w-full flex flex-col overflow-x-clip">
+      <main id="main-content" className="flex-1 w-full flex flex-col overflow-x-clip">
         {/* Chapter 1: The Problem (Hero) */}
         <HeroChapter />
 
@@ -109,6 +110,24 @@ export default function LandingPage() {
         {/* Chapter 8: What GeoShield Can and Cannot Tell You (System Boundaries & Attributions) */}
         <LimitationsChapter />
       </main>
+
+      {/* Global Semantic Footer */}
+      <footer className="border-t border-slate-800/80 bg-[#080d15] py-8 text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© 2026 GeoShield. Free Academic & Research Project (Kullu & Mandi, HP).</p>
+          <div className="flex items-center gap-5 text-xs font-mono">
+            <Link href="/dashboard" className="text-sky-400 hover:text-sky-300 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded">
+              Operational Risk Map
+            </Link>
+            <Link href="/privacy" className="hover:text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded">
+              Privacy Notice
+            </Link>
+            <Link href="/terms" className="hover:text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded">
+              Terms & Limitations
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

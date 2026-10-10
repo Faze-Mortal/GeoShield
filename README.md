@@ -76,15 +76,20 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your PostgreSQL credentials:
 # DATABASE_URL=postgresql+psycopg2://user:password@localhost:5432/geoshield
+# CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+# ENABLE_DOCS=true
 
 # Initialize database schema and import grid data
 python ../database/import_data.py
 
-# Start FastAPI server
+# Start FastAPI server (development)
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# For production deployment (no reload):
+# uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
-The API will be available at `http://127.0.0.1:8000` (docs at `http://127.0.0.1:8000/docs`).
+The API will be available at `http://127.0.0.1:8000` (docs at `http://127.0.0.1:8000/docs` when `ENABLE_DOCS=true`).
 
 ---
 

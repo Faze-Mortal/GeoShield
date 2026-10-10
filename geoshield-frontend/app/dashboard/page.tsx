@@ -200,7 +200,7 @@ export default function DashboardPage() {
 
   return (
     <ErrorBoundary>
-      <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[#090e17] font-sans text-slate-100 select-none">
+      <div id="main-content" className="relative flex h-screen w-screen flex-col overflow-hidden bg-[#090e17] font-sans text-slate-100 select-none">
         {/* Slim Operational Header Bar (h-11) */}
         <header className="z-20 flex h-11 w-full shrink-0 items-center justify-between border-b border-slate-800 bg-[#0d1527] px-3.5">
           {/* Brand & Region (Links to /) */}
@@ -282,6 +282,35 @@ export default function DashboardPage() {
             </button>
           </div>
         </header>
+
+        {/* Restrained Non-blocking Research Notice Bar */}
+        <div
+          role="region"
+          aria-label="Research limitations notice"
+          className="z-20 border-b border-slate-800/80 bg-[#0c1424]/95 px-3 py-1 text-[11px] text-slate-300 flex items-center justify-between gap-2 overflow-x-auto whitespace-nowrap shrink-0"
+        >
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" aria-hidden="true" />
+            <span className="truncate">
+              Research tool, not an official warning. The Susceptibility Score is not a probability. Rainfall data is a snapshot as of 2026-09-12.
+            </span>
+            <Link
+              href="/terms#limitations"
+              className="text-sky-400 hover:text-sky-300 underline underline-offset-2 ml-1 shrink-0 font-medium focus-visible:outline-2 focus-visible:outline-sky-400 rounded"
+            >
+              Read limitations
+            </Link>
+          </div>
+          <div className="hidden sm:flex items-center gap-3 text-[10px] text-slate-400 font-mono shrink-0 pl-2">
+            <Link href="/privacy" className="hover:text-slate-200 transition-colors focus-visible:outline-1 focus-visible:outline-sky-400 rounded">
+              Privacy
+            </Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-slate-200 transition-colors focus-visible:outline-1 focus-visible:outline-sky-400 rounded">
+              Terms
+            </Link>
+          </div>
+        </div>
 
         {/* Global API Unreachable Banner (non-blocking) */}
         {apiConnected === false && !checkingApi && (
