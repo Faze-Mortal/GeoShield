@@ -1,10 +1,12 @@
-from datetime import date
-from pathlib import Path
+import os
 import sys
 import json
+import logging
+from datetime import date
+from pathlib import Path
 
 import pandas as pd
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy import func
@@ -13,6 +15,8 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import GridRisk
 
+logger = logging.getLogger("geoshield.api")
+logging.basicConfig(level=logging.INFO)
 
 # Make the supplied GeoShield rainfall logic importable without changing it.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -25,19 +29,73 @@ from rainfall_trigger import (  # noqa: E402
     current_risk,
 )
 
+# API documentation toggle (can be disabled in production)
+ENABLE_DOCS = os.getenv("ENABLE_DOCS", "true").lower() in ("true", "1", "yes", "on")
 
-app = FastAPI(title="GeoShield API")
+app = FastAPI(
+    title="GeoShield API",
+    docs_url="/docs" if ENABLE_DOCS else None,
+    redoc_url="/redoc" if ENABLE_DOCS else None,
+    openapi_url="/openapi.json" if ENABLE_DOCS else None,
+)
 
-# Allow the local Next.js frontend to call this API from the browser.
+# Indexing hygiene: instruct search engines not to index API responses
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Robots-Tag"] = "noindex"
+    return response
+
+# Configurable CORS allowlist from environment variable
+_raw_origins = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000",
+)
+CORS_ORIGINS = [orig.strip() for orig in _raw_origins.split(",") if orig.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+RAINFALL_FILE = SUPPORTING_DIR / "rainfall_kullu_mandi_v2.csv"
+_cached_rainfall_df: pd.DataFrame | None = None
+
+def get_rainfall_data() -> pd.DataFrame:
+    """Return a copy of the rainfall dataset, caching in memory after first load."""
+    global _cached_rainfall_df
+    if _cached_rainfall_df is not None:
+        return _cached_rainfall_df.copy()
+
+    if not RAINFALL_FILE.exists():
+        logger.error(f"Rainfall data file not found on filesystem: {RAINFALL_FILE}")
+        raise HTTPException(
+            status_code=500,
+            detail="Rainfall data file unavailable",
+        )
+
+    try:
+        df = pd.read_csv(RAINFALL_FILE)
+        df["date"] = pd.to_datetime(df["date"])
+        _cached_rainfall_df = df
+        logger.info("Successfully loaded and cached rainfall history dataset (%d rows)", len(df))
+        return _cached_rainfall_df.copy()
+    except Exception as exc:
+        logger.error(f"Failed to read rainfall dataset from {RAINFALL_FILE}: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail="Rainfall data file unavailable",
+        )
+
+# Pre-cache on startup if available
+if RAINFALL_FILE.exists():
+    try:
+        get_rainfall_data()
+    except Exception as exc:
+        logger.warning(f"Startup pre-caching of rainfall data failed: {exc}")
+
 
 def json_safe(value):
     """Convert NumPy scalar values returned by the supplied trigger module to JSON types."""
@@ -51,10 +109,6 @@ def json_safe(value):
         except (ValueError, TypeError):
             pass
     return value
-
-
-
-RAINFALL_FILE = SUPPORTING_DIR / "rainfall_kullu_mandi_v2.csv"
 
 
 def get_db():
@@ -186,14 +240,7 @@ def simulate(request: SimulationRequest, db: Session = Depends(get_db)):
     if cell is None:
         raise HTTPException(status_code=404, detail="Cell not found")
 
-    if not RAINFALL_FILE.exists():
-        raise HTTPException(
-            status_code=500,
-            detail=f"Rainfall data file not found: {RAINFALL_FILE}",
-        )
-
-    rainfall = pd.read_csv(RAINFALL_FILE)
-    rainfall["date"] = pd.to_datetime(rainfall["date"])
+    rainfall = get_rainfall_data()
 
     station = rainfall[
         rainfall["location_id"] == cell.nearest_rainfall_location_id

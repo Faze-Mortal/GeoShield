@@ -129,7 +129,12 @@ export default function SimulationPanel({
 
       {/* Simulation Result */}
       {simResult && !loading && (
-        <div className="mt-3 space-y-2.5">
+        <div
+          role="region"
+          aria-live="polite"
+          aria-label="Simulation results"
+          className="mt-3 space-y-2.5"
+        >
           {/* Two-Column Comparison Table */}
           <div className="rounded border border-slate-700/80 bg-slate-900/70 overflow-hidden">
             <table className="w-full text-left text-xs border-collapse">

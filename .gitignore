@@ -35,13 +35,20 @@ __pycache__/
 **/.pytest_cache/
 
 # Local Environment Variables & Secrets
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-**/.env.local
-**/.env*.local
-**/backend/.env
+.env
+.env.*
+!.env.example
+!.env*.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env*.example
+
+# Backups & Dumps
+*.bak
+*.backup
+*.dump
+*.sql
 
 # Large Raw Datasets & Rasters (exceeds GitHub file limits)
 /data/

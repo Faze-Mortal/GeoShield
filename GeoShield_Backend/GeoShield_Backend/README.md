@@ -74,9 +74,13 @@ Example:
 
 ```text
 DATABASE_URL=postgresql+psycopg2://postgres:YOUR_PASSWORD@localhost:5432/geoshield
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+ENABLE_DOCS=true
 ```
 
-**Do not send your real `.env` to anyone.**
+In production, set `CORS_ALLOWED_ORIGINS` to your production frontend domain (e.g. `https://[[PLACEHOLDER: your-domain.com]]`) and set `ENABLE_DOCS=false` to disable interactive documentation endpoints.
+
+**Do not send your real `.env` to anyone or commit it to version control.**
 
 ## 3. Create a virtual environment
 
@@ -137,20 +141,27 @@ The detailed database instructions are in `database/IMPORT_DATA.md`.
 
 ## 5. Start FastAPI
 
-From the project root, with the virtual environment activated:
+### Development Mode
+From `backend\`:
 
 ```powershell
-cd backend
 uvicorn app.main:app --reload
 ```
 
-Swagger UI:
+### Production Mode (no reload)
+In production, run without `--reload` and bind to your production interface/port:
+
+```powershell
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+Swagger UI (when `ENABLE_DOCS=true`):
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-OpenAPI JSON:
+OpenAPI JSON (when `ENABLE_DOCS=true`):
 
 ```text
 http://127.0.0.1:8000/openapi.json
