@@ -242,25 +242,6 @@ export default function LimitationsChapter() {
             <span>Singh et al. (2025), DOI 10.1016/j.nhres.2024.12.004</span>
           </li>
         </ul>
-
-        <div className="mt-8 pt-4 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400 font-mono">
-          <div>
-            GeoShield &middot; Two-Layer Landslide Hazard Intelligence &middot; Kullu &amp; Mandi, HP
-          </div>
-          <div className="flex items-center gap-4 text-xs">
-            <Link href="/privacy" className="hover:text-slate-200 transition-colors underline underline-offset-2">
-              Privacy Notice
-            </Link>
-            <span>&middot;</span>
-            <Link href="/terms" className="hover:text-slate-200 transition-colors underline underline-offset-2">
-              Terms &amp; Limitations
-            </Link>
-            <span>&middot;</span>
-            <Link href="/terms#limitations" className="hover:text-sky-400 transition-colors underline underline-offset-2">
-              Methodology Caveats
-            </Link>
-          </div>
-        </div>
       </div>
     </section>
   );

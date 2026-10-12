@@ -115,14 +115,29 @@ export default function LandingPage() {
       <footer className="border-t border-slate-800/80 bg-[#080d15] py-8 text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 GeoShield. Free Academic & Research Project (Kullu & Mandi, HP).</p>
-          <div className="flex items-center gap-5 text-xs font-mono">
-            <Link href="/dashboard" className="text-sky-400 hover:text-sky-300 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-5 gap-y-2 text-xs font-mono">
+            <Link
+              href="/dashboard"
+              className="text-sky-400 hover:text-sky-300 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded"
+            >
               Operational Risk Map
             </Link>
-            <Link href="/privacy" className="hover:text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded">
+            <Link
+              href="/terms#limitations"
+              className="hover:text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded"
+            >
+              Methodology Caveats
+            </Link>
+            <Link
+              href="/privacy"
+              className="hover:text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded"
+            >
               Privacy Notice
             </Link>
-            <Link href="/terms" className="hover:text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded">
+            <Link
+              href="/terms"
+              className="hover:text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded"
+            >
               Terms & Limitations
             </Link>
           </div>

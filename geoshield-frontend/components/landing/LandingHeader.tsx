@@ -17,14 +17,14 @@ export default function LandingHeader({ progress = 0 }: LandingHeaderProps) {
         aria-hidden="true"
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 min-h-14 sm:h-14 py-1.5 sm:py-0 flex items-center justify-between gap-2">
         {/* Wordmark */}
         <Link
           href="#chapter-1"
-          className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 rounded py-1 px-1 -mx-1"
+          className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 rounded py-1 px-1 -mx-1 shrink-0"
           aria-label="GeoShield homepage top"
         >
-          <div className="h-6 w-6 rounded border border-sky-400/50 bg-sky-950/60 flex items-center justify-center text-sky-400 group-hover:border-sky-400 transition-colors">
+          <div className="h-6 w-6 rounded border border-sky-400/50 bg-sky-950/60 flex items-center justify-center text-sky-400 group-hover:border-sky-400 transition-colors shrink-0">
             <svg
               className="h-3.5 w-3.5"
               viewBox="0 0 24 24"
@@ -49,7 +49,7 @@ export default function LandingHeader({ progress = 0 }: LandingHeaderProps) {
         </Link>
 
         {/* Navigation & CTAs */}
-        <div className="flex items-center gap-3 sm:gap-5">
+        <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-5 shrink-0">
           <a
             href="#how-layers-become-current-risk"
             onClick={(e) => {
@@ -66,7 +66,7 @@ export default function LandingHeader({ progress = 0 }: LandingHeaderProps) {
                 window.history.pushState(null, '', '#how-layers-become-current-risk');
               }
             }}
-            className="text-xs text-slate-300 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 rounded px-1.5 py-1"
+            className="text-[11px] sm:text-xs text-slate-300 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 rounded px-1.5 py-0.5 sm:py-1 whitespace-nowrap"
             title="Jump to the How the Layers Become Current Risk section"
           >
             <span>Explore How Risk Is Calculated</span>
@@ -75,11 +75,11 @@ export default function LandingHeader({ progress = 0 }: LandingHeaderProps) {
 
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 h-8 rounded border border-sky-400/40 bg-sky-600 hover:bg-sky-500 text-white px-3 text-xs font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            className="inline-flex items-center justify-center gap-1.5 min-h-[28px] sm:h-8 rounded border border-sky-400/40 bg-sky-600 hover:bg-sky-500 text-white px-2.5 sm:px-3 py-1 sm:py-0 text-[11px] sm:text-xs font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 whitespace-nowrap"
           >
             <span>Explore the Risk Map</span>
             <svg
-              className="h-3 w-3"
+              className="h-3 w-3 shrink-0"
               viewBox="0 0 20 20"
               fill="currentColor"
               aria-hidden="true"
