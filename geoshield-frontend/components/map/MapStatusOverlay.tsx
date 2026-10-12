@@ -3,15 +3,17 @@
 import React from 'react';
 import { Spinner, ErrorNotice } from '@/components/ui';
 import { MIN_GRID_ZOOM } from '@/lib/config';
+import type { BackendStatus } from '@/services/healthService';
 import type { MapStatus } from './GeoShieldMap';
 
 interface Props {
   status: MapStatus;
   onRetry: () => void;
   onZoomIn: () => void;
+  backendStatus?: BackendStatus;
 }
 
-export default function MapStatusOverlay({ status, onRetry, onZoomIn }: Props) {
+export default function MapStatusOverlay({ status, onRetry, onZoomIn, backendStatus }: Props) {
   // Below min zoom hint
   if (status.belowMinZoom) {
     return (
@@ -34,8 +36,8 @@ export default function MapStatusOverlay({ status, onRetry, onZoomIn }: Props) {
     );
   }
 
-  // Error banner
-  if (status.error) {
+  // Error banner (suppress while waking up from cold start)
+  if (status.error && backendStatus !== 'waking' && backendStatus !== 'checking') {
     return (
       <div className="absolute top-4 inset-x-4 z-10 mx-auto max-w-md">
         <ErrorNotice message={status.error} onRetry={onRetry} />
@@ -44,7 +46,7 @@ export default function MapStatusOverlay({ status, onRetry, onZoomIn }: Props) {
   }
 
   // No cells in view (zoom is sufficient)
-  if (!status.loading && status.cellCount === 0) {
+  if (!status.loading && status.cellCount === 0 && backendStatus === 'connected') {
     return (
       <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none font-sans">
         <div className="rounded border border-slate-700/80 bg-[#0d1527]/95 px-5 py-3 text-center backdrop-blur-md max-w-xs mx-4">
@@ -58,11 +60,15 @@ export default function MapStatusOverlay({ status, onRetry, onZoomIn }: Props) {
   return (
     <>
       {/* Loading indicator */}
-      {status.loading && (
+      {(status.loading || backendStatus === 'waking' || backendStatus === 'checking') && (
         <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 font-sans">
           <div className="flex items-center gap-2 rounded border border-slate-700/80 bg-[#0d1527]/95 px-3 py-1 text-xs text-slate-300 backdrop-blur-md shadow-md">
             <Spinner size="sm" className="text-sky-400" />
-            <span className="font-medium">Loading grid...</span>
+            <span className="font-medium">
+              {backendStatus === 'waking'
+                ? 'Connecting to GeoShield API…'
+                : 'Loading grid...'}
+            </span>
           </div>
         </div>
       )}

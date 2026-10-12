@@ -5,7 +5,13 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-import { checkHealth } from '@/services/healthService';
+import {
+  wakeUpBackend,
+  subscribeToWakeUp,
+  getBackendState,
+  type WakeUpState,
+  type BackendStatus,
+} from '@/services/healthService';
 import { getPrediction } from '@/services/predictService';
 import { getCellGeometry } from '@/services/gridService';
 import { API_BASE_URL } from '@/lib/config';
@@ -76,9 +82,9 @@ function TourHint() {
 export default function DashboardPage() {
   const mapRef = useRef<GeoShieldMapHandle | null>(null);
 
-  // API connectivity status
-  const [apiConnected, setApiConnected] = useState<boolean | null>(null);
-  const [checkingApi, setCheckingApi] = useState(true);
+  // API connectivity & cold-start wake-up state
+  const [wakeUpState, setWakeUpState] = useState<WakeUpState>(() => getBackendState());
+  const apiConnected = wakeUpState.status === 'connected';
 
   // Methodology modal
   const [methodologyOpen, setMethodologyOpen] = useState(false);
@@ -117,17 +123,34 @@ export default function DashboardPage() {
     resetSimulation,
   } = useSimulation();
 
-  // Initial health check
-  const runHealthCheck = useCallback(async () => {
-    setCheckingApi(true);
-    const healthy = await checkHealth();
-    setApiConnected(healthy);
-    setCheckingApi(false);
+  // Automatic cold-start wake-up on mount with lifecycle subscription
+  useEffect(() => {
+    const unsubscribe = subscribeToWakeUp((state) => {
+      setWakeUpState(state);
+    });
+
+    wakeUpBackend();
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
+  // Automatically continue loading the grid once backend becomes reachable
+  const prevStatusRef = useRef<BackendStatus>(wakeUpState.status);
   useEffect(() => {
-    runHealthCheck();
-  }, [runHealthCheck]);
+    if (wakeUpState.status === 'connected' && prevStatusRef.current !== 'connected') {
+      if (mapStatus.cellCount <= 0) {
+        mapRef.current?.refetchGrid();
+      }
+    }
+    prevStatusRef.current = wakeUpState.status;
+  }, [wakeUpState.status, mapStatus.cellCount]);
+
+  // Manual retry handler — triggers same recovery flow without full-page reload
+  const handleRetry = useCallback(() => {
+    wakeUpBackend({ force: true });
+  }, []);
 
   // Handle cell click on the map
   const handleCellClick = useCallback(
@@ -195,8 +218,11 @@ export default function DashboardPage() {
 
   // Refetch action
   const handleRetryGrid = useCallback(() => {
+    if (wakeUpState.status === 'unreachable') {
+      wakeUpBackend({ force: true });
+    }
     mapRef.current?.refetchGrid();
-  }, []);
+  }, [wakeUpState.status]);
 
   return (
     <ErrorBoundary>
@@ -247,24 +273,30 @@ export default function DashboardPage() {
             <div
               className="flex items-center gap-1.5 text-[11px]"
               title={
-                apiConnected
+                wakeUpState.status === 'connected'
                   ? `Connected to ${API_BASE_URL}`
+                  : wakeUpState.status === 'waking'
+                  ? `Connecting to GeoShield API (attempt ${wakeUpState.attempt}/${wakeUpState.maxAttempts})`
+                  : wakeUpState.status === 'checking'
+                  ? 'Connecting to GeoShield API...'
                   : `Cannot reach API at ${API_BASE_URL}`
               }
             >
-              {checkingApi ? (
-                <>
-                  <Spinner size="sm" className="text-slate-400" />
-                  <span className="text-slate-400">API...</span>
-                </>
-              ) : apiConnected ? (
+              {wakeUpState.status === 'connected' ? (
                 <>
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   <span className="text-slate-400">Connected</span>
                 </>
+              ) : wakeUpState.status === 'checking' || wakeUpState.status === 'waking' ? (
+                <>
+                  <Spinner size="sm" className="text-sky-400" />
+                  <span className="text-sky-300 font-medium">
+                    {wakeUpState.status === 'waking' ? 'Waking API...' : 'Connecting API...'}
+                  </span>
+                </>
               ) : (
                 <button
-                  onClick={runHealthCheck}
+                  onClick={handleRetry}
                   className="flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
@@ -312,16 +344,41 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Global API Unreachable Banner (non-blocking) */}
-        {apiConnected === false && !checkingApi && (
-          <div className="z-30 flex items-center justify-between border-b border-red-500/30 bg-red-950/90 px-3 py-1.5 text-xs text-red-200">
-            <span>
-              GeoShield backend unreachable at{' '}
-              <strong className="font-mono text-white">{API_BASE_URL}</strong>.
+        {/* Cold-start Non-alarming Status Banner */}
+        {wakeUpState.status === 'waking' && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="z-30 flex items-center justify-between border-b border-sky-500/30 bg-sky-950/90 px-3.5 py-1.5 text-xs text-sky-200"
+          >
+            <div className="flex items-center gap-2">
+              <Spinner size="sm" className="text-sky-400 shrink-0" />
+              <span>
+                Connecting to GeoShield API… The free backend service spins down during inactivity and may take 20–45 seconds to wake up.
+              </span>
+            </div>
+            <span className="font-mono text-[10px] text-sky-300/80 shrink-0 hidden sm:inline">
+              Attempt {wakeUpState.attempt} of {wakeUpState.maxAttempts}
             </span>
+          </div>
+        )}
+
+        {/* Global API Unreachable Banner (only when exhausted) */}
+        {wakeUpState.status === 'unreachable' && (
+          <div
+            role="alert"
+            className="z-30 flex items-center justify-between border-b border-red-500/30 bg-red-950/90 px-3.5 py-1.5 text-xs text-red-200"
+          >
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-red-400 shrink-0" aria-hidden="true" />
+              <span>
+                GeoShield backend unreachable at{' '}
+                <strong className="font-mono text-white">{API_BASE_URL}</strong>. The service may still be booting or temporarily offline.
+              </span>
+            </div>
             <button
-              onClick={runHealthCheck}
-              className="rounded bg-red-600/80 px-2 py-0.5 font-medium text-white hover:bg-red-500 transition-colors"
+              onClick={handleRetry}
+              className="rounded bg-red-600/80 px-2.5 py-0.5 text-xs font-medium text-white hover:bg-red-500 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-400 shrink-0"
             >
               Retry
             </button>
@@ -338,6 +395,7 @@ export default function DashboardPage() {
             selectedCellId={selectedCellId}
             selectedCellFeature={selectedCellFeature}
             simulatedRiskColor={simulatedRiskColor}
+            backendStatus={wakeUpState.status}
           />
 
           {/* Tour What-If Hint (if ?tour=whatif) */}
@@ -350,6 +408,7 @@ export default function DashboardPage() {
             onSearch={handleSearch}
             searching={searching}
             error={searchError}
+            disabled={!apiConnected}
           />
 
           {/* Floating Legend (bottom-left) */}
@@ -360,6 +419,7 @@ export default function DashboardPage() {
             status={mapStatus}
             onRetry={handleRetryGrid}
             onZoomIn={handleZoomIn}
+            backendStatus={wakeUpState.status}
           />
 
           {/* Right-side Detail & Simulation Panel (docked right, max 360px) */}
@@ -372,6 +432,7 @@ export default function DashboardPage() {
             onRetry={retryPredict}
             onOpenMethodology={() => setMethodologyOpen(true)}
             onSimulationChange={handleSimulationChange}
+            apiDisabled={!apiConnected}
           />
         </div>
 

@@ -10,12 +10,14 @@ interface SimulationPanelProps {
   cellId: string;
   staticSusceptibilityScore: number;
   onSimulationChange?: (sim: SimulateResponse | null) => void;
+  disabled?: boolean;
 }
 
 export default function SimulationPanel({
   cellId,
   staticSusceptibilityScore,
   onSimulationChange,
+  disabled = false,
 }: SimulationPanelProps) {
   const [activePercent, setActivePercent] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,7 +25,7 @@ export default function SimulationPanel({
   const [simResult, setSimResult] = useState<SimulateResponse | null>(null);
 
   const handleSimulate = async (percent: number) => {
-    if (loading) return;
+    if (loading || disabled) return;
     setLoading(true);
     setError(null);
     setActivePercent(percent);
@@ -46,6 +48,7 @@ export default function SimulationPanel({
   };
 
   const handleReset = () => {
+    if (disabled) return;
     setActivePercent(null);
     setSimResult(null);
     setError(null);
@@ -88,12 +91,13 @@ export default function SimulationPanel({
           <button
             key={pct}
             onClick={() => handleSimulate(pct)}
-            disabled={loading}
+            disabled={loading || disabled}
+            title={disabled ? 'API connecting...' : undefined}
             className={`flex-1 rounded py-1 text-xs font-semibold transition-colors ${
               activePercent === pct
                 ? 'bg-sky-600 text-white border border-sky-400'
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-750 hover:text-white border border-slate-700/70'
-            } disabled:opacity-40`}
+            } disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             +{pct}%
           </button>
@@ -101,8 +105,8 @@ export default function SimulationPanel({
         {activePercent !== null && (
           <button
             onClick={handleReset}
-            disabled={loading}
-            className="rounded px-2.5 py-1 text-xs font-medium text-slate-400 hover:text-slate-200 border border-slate-700/60 hover:bg-slate-800 transition-colors"
+            disabled={loading || disabled}
+            className="rounded px-2.5 py-1 text-xs font-medium text-slate-400 hover:text-slate-200 border border-slate-700/60 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Reset
           </button>

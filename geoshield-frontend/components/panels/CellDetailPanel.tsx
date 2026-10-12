@@ -15,6 +15,7 @@ interface CellDetailPanelProps {
   onRetry: () => void;
   onOpenMethodology: () => void;
   onSimulationChange?: (sim: SimulateResponse | null) => void;
+  apiDisabled?: boolean;
 }
 
 export default function CellDetailPanel({
@@ -26,6 +27,7 @@ export default function CellDetailPanel({
   onRetry,
   onOpenMethodology,
   onSimulationChange,
+  apiDisabled = false,
 }: CellDetailPanelProps) {
   const [copied, setCopied] = useState(false);
 
@@ -198,6 +200,7 @@ export default function CellDetailPanel({
             cellId={predictData.cell_id}
             staticSusceptibilityScore={predictData.susceptibility_score}
             onSimulationChange={onSimulationChange}
+            disabled={apiDisabled}
           />
         </div>
       )}

@@ -24,6 +24,7 @@ import {
 import { riskMatchExpression } from '@/lib/risk';
 import { padBBox, bboxContains, bboxKey, type BBox } from '@/lib/geo';
 import { getGrid } from '@/services/gridService';
+import type { BackendStatus } from '@/services/healthService';
 import type { GridResponse, GridFeature } from '@/types/api';
 
 // ---- Layer/source IDs -----------------------------------------------------
@@ -71,6 +72,7 @@ interface GeoShieldMapProps {
   selectedCellId: string | null;
   selectedCellFeature: GridFeature | null;
   simulatedRiskColor?: string | null;
+  backendStatus?: BackendStatus;
 }
 
 const GeoShieldMap = forwardRef<GeoShieldMapHandle, GeoShieldMapProps>(function GeoShieldMap(
@@ -80,6 +82,7 @@ const GeoShieldMap = forwardRef<GeoShieldMapHandle, GeoShieldMapProps>(function 
     selectedCellId,
     selectedCellFeature,
     simulatedRiskColor,
+    backendStatus,
   },
   ref,
 ) {
@@ -91,7 +94,12 @@ const GeoShieldMap = forwardRef<GeoShieldMapHandle, GeoShieldMapProps>(function 
   const seqRef = useRef(0);
   const hoveredIdRef = useRef<string | null>(null);
   const lastCellCountRef = useRef<number>(0);
+  const backendStatusRef = useRef<BackendStatus | undefined>(backendStatus);
   const [mapError, setMapError] = useState<string | null>(null);
+
+  useEffect(() => {
+    backendStatusRef.current = backendStatus;
+  }, [backendStatus]);
 
   // Small bounded LRU cache (keyed by rounded bbox)
   const cacheRef = useRef<Map<string, GridResponse>>(new Map());
@@ -188,6 +196,44 @@ const GeoShieldMap = forwardRef<GeoShieldMapHandle, GeoShieldMapProps>(function 
         applyGridData(map, data, truncated ? viewBBox : paddedBBox, zoom, truncated);
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return;
+        if (seq !== seqRef.current) return;
+
+        // If backend is waking up or checking, keep calm loading state instead of alarming error
+        if (backendStatusRef.current === 'waking' || backendStatusRef.current === 'checking') {
+          onStatusChange({
+            zoom: Math.round(zoom * 10) / 10,
+            cellCount: 0,
+            loading: true,
+            truncated: false,
+            error: null,
+            belowMinZoom: false,
+          });
+          return;
+        }
+
+        // If connected but failed transiently, try one safe retry after brief backoff
+        try {
+          await new Promise<void>((resolve) => {
+            let timer: ReturnType<typeof setTimeout>;
+            const onAbort = () => {
+              clearTimeout(timer);
+              resolve();
+            };
+            timer = setTimeout(() => {
+              controller.signal.removeEventListener('abort', onAbort);
+              resolve();
+            }, 1500);
+            controller.signal.addEventListener('abort', onAbort, { once: true });
+          });
+          if (seq !== seqRef.current || controller.signal.aborted) return;
+          const retryData = await getGrid({ bbox: paddedBBox, limit: GRID_FETCH_LIMIT, signal: controller.signal });
+          if (seq !== seqRef.current) return;
+          applyGridData(map, retryData, paddedBBox, zoom, false);
+          return;
+        } catch {
+          // Both initial attempt and safe retry failed
+        }
+
         if (seq !== seqRef.current) return;
         onStatusChange({
           zoom: Math.round(zoom * 10) / 10,
