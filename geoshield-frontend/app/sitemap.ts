@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { siteConfig } from '@/lib/siteConfig';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://geoshield.research.org').replace(/\/+$/, '');
+  const siteUrl = siteConfig.siteUrl;
   const lastModified = new Date('2026-10-10T00:00:00Z');
 
   return [

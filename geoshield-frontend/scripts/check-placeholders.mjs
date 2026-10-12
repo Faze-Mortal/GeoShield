@@ -9,6 +9,7 @@ const projectRoot = path.resolve(__dirname, '..');
 const scanDirectories = [
   path.join(projectRoot, 'app'),
   path.join(projectRoot, 'components'),
+  path.join(projectRoot, 'lib'),
 ];
 
 const placeholderRegex = /\[\[PLACEHOLDER:[^\]]+\]\]/g;

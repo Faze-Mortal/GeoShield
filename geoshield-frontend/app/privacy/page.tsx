@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata: Metadata = {
   title: 'Privacy Notice — GeoShield',
@@ -56,16 +57,21 @@ export default function PrivacyPage() {
               Privacy Notice
             </h1>
             <p className="text-xs text-slate-400 font-mono mt-2">
-              Last updated: [[PLACEHOLDER: date]]
+              Last updated: {siteConfig.operator.privacyLastUpdated}
             </p>
           </div>
 
           <div className="p-4 rounded border border-slate-800 bg-[#0d1627]/60 text-sm text-slate-300 leading-relaxed">
             <p>
               GeoShield is a free student and academic research project operated by{' '}
-              <strong className="text-slate-100">[[PLACEHOLDER: operator name]]</strong>.
+              <strong className="text-slate-100">{siteConfig.operator.name}</strong>.
               For research inquiries or data inquiries, contact:{' '}
-              <span className="text-sky-300 font-mono">[[PLACEHOLDER: contact email]]</span>.
+              <a
+                href={`mailto:${siteConfig.operator.contactEmail}`}
+                className="text-sky-300 font-mono underline underline-offset-2 hover:text-sky-200 focus-visible:outline-2 focus-visible:outline-sky-400 rounded"
+              >
+                {siteConfig.operator.contactEmail}
+              </a>.
             </p>
           </div>
 
@@ -135,7 +141,10 @@ export default function PrivacyPage() {
               4. Server Logs & Hosting Infrastructure
             </h2>
             <p className="text-sm text-slate-300 leading-relaxed">
-              GeoShield is hosted on <strong className="text-slate-100">[[PLACEHOLDER: hosting provider]]</strong>. In common with all web hosting environments, incoming HTTP requests generate standard access logs containing:
+              GeoShield is deployed across managed cloud infrastructure: the web frontend is hosted on{' '}
+              <strong className="text-slate-100">{siteConfig.hosting.frontend}</strong>, the backend inference API on{' '}
+              <strong className="text-slate-100">{siteConfig.hosting.backend}</strong>, and the spatial PostgreSQL/PostGIS database on{' '}
+              <strong className="text-slate-100">{siteConfig.hosting.database}</strong>. In common with standard cloud hosting environments, incoming HTTP requests generate technical access logs containing:
             </p>
             <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
               <li>Client IP address and requesting port.</li>
@@ -145,7 +154,14 @@ export default function PrivacyPage() {
               <li>User-agent string (browser type and operating system).</li>
             </ul>
             <p className="text-sm text-slate-300 leading-relaxed">
-              These technical logs are processed solely to maintain system availability, prevent denial-of-service disruptions, and troubleshoot network errors. Server logs are automatically purged after <strong className="text-slate-100">[[PLACEHOLDER: log retention period]]</strong>.
+              These technical logs are processed solely to maintain system availability, prevent denial-of-service disruptions, and troubleshoot network errors. Retention periods depend on provider platform architecture and workspace subscription tier:
+            </p>
+            <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+              <li><strong className="text-slate-100">Vercel (Frontend):</strong> {siteConfig.hosting.vercelLogRetention}</li>
+              <li><strong className="text-slate-100">Render (API Backend):</strong> {siteConfig.hosting.renderLogRetention}</li>
+            </ul>
+            <p className="text-xs text-slate-400 mt-2">
+              Note: Spatial database queries on Supabase are executed internally by the Render backend service; public visitors do not connect directly to the database instance.
             </p>
           </section>
 
@@ -158,7 +174,12 @@ export default function PrivacyPage() {
             </p>
             <p className="text-sm text-slate-300 leading-relaxed">
               If you have questions regarding data handling or wish to inquire about the scientific data sources, please reach out to:{' '}
-              <span className="text-sky-300 font-mono">[[PLACEHOLDER: contact email]]</span>.
+              <a
+                href={`mailto:${siteConfig.operator.contactEmail}`}
+                className="text-sky-300 font-mono underline underline-offset-2 hover:text-sky-200 focus-visible:outline-2 focus-visible:outline-sky-400 rounded"
+              >
+                {siteConfig.operator.contactEmail}
+              </a>.
             </p>
           </section>
         </article>

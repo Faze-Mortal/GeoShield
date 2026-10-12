@@ -6,7 +6,7 @@ const cspHeader = [
   "style-src 'self' 'unsafe-inline' https://basemaps.cartocdn.com",
   "img-src 'self' data: blob: https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.openstreetmap.org",
   "font-src 'self' data: https://basemaps.cartocdn.com",
-  "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.openstreetmap.org ws: wss:",
+  "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 https://geoshield-api-9nl7.onrender.com https://*.onrender.com https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.openstreetmap.org ws: wss:",
   "worker-src 'self' blob:",
   "child-src 'self' blob:",
   "object-src 'none'",

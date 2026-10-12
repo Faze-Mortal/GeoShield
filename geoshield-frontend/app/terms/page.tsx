@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata: Metadata = {
   title: 'Terms of Use & Scientific Limitations — GeoShield',
@@ -55,9 +56,15 @@ export default function TermsPage() {
             <h1 className="font-serif text-3xl md:text-4xl text-slate-100 tracking-tight">
               Terms of Use & Scientific Limitations
             </h1>
-            <p className="text-xs text-slate-400 font-mono mt-2">
-              Last updated: [[PLACEHOLDER: date]]
-            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              <p className="text-xs text-slate-400 font-mono">
+                Last updated: {siteConfig.operator.termsLastUpdated}
+              </p>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-medium bg-amber-950/50 text-amber-300 border border-amber-800/80">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+                Draft — Pending Legal Review
+              </span>
+            </div>
           </div>
 
           <div className="p-4 rounded border border-amber-500/40 bg-amber-950/20 text-sm text-amber-200/90 leading-relaxed">
@@ -184,11 +191,26 @@ export default function TermsPage() {
               GeoShield and its authors make no representations or warranties of any kind, express or implied, regarding the accuracy, completeness, timeliness, or fitness for any particular purpose of the data, map visualizations, or simulated risk scores.
             </p>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Under no circumstances shall GeoShield, its authors, or academic affiliates be held liable for any direct, indirect, incidental, consequential, or exemplary damages resulting from the use or inability to use this platform.
+              Under no circumstances shall GeoShield, the {siteConfig.operator.name}, or its contributing authors be held liable for any direct, indirect, incidental, consequential, or exemplary damages resulting from the use or inability to use this platform.
             </p>
-            <div className="p-3 rounded bg-slate-900/80 border border-slate-800 text-xs text-slate-400 font-mono">
-              [[PLACEHOLDER: Governing law / legal jurisdiction to be reviewed by counsel]]
-            </div>
+            {!siteConfig.legal.isReviewed ? (
+              <div className="p-3.5 rounded bg-amber-950/20 border border-amber-800/60 text-xs text-amber-200/90 leading-relaxed space-y-1.5">
+                <div className="font-semibold text-amber-100 flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" />
+                  Governing Jurisdiction Clause — Pending Formal Legal Review
+                </div>
+                <p>
+                  {siteConfig.legal.pendingNotice}
+                </p>
+                <p className="text-[11px] text-amber-300/70 italic">
+                  Note: This terms page requires formal review by qualified legal counsel prior to full public publication.
+                </p>
+              </div>
+            ) : (
+              <div className="p-3 rounded bg-slate-900/80 border border-slate-800 text-xs text-slate-400 font-mono">
+                {siteConfig.legal.jurisdictionClause}
+              </div>
+            )}
           </section>
         </article>
       </main>
