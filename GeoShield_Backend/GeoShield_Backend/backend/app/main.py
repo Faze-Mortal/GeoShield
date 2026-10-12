@@ -49,7 +49,7 @@ async def add_security_headers(request: Request, call_next):
 # Configurable CORS allowlist from environment variable
 _raw_origins = os.getenv(
     "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000",
+    "http://localhost:3000,http://127.0.0.1:3000,https://geoshield-hazel.vercel.app",
 )
 CORS_ORIGINS = [orig.strip() for orig in _raw_origins.split(",") if orig.strip()]
 

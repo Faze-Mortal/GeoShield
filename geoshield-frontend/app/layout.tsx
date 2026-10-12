@@ -19,14 +19,14 @@ const newsreader = Newsreader({
   display: 'swap',
 });
 
-// Configure metadataBase using NEXT_PUBLIC_SITE_URL with safe fallback
-// Production URL placeholder: [[PLACEHOLDER: production site url]]
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://geoshield.research.org';
+import { siteConfig } from '@/lib/siteConfig';
+
+// Configure metadataBase using siteConfig.siteUrl with safe URL parsing
 let metadataBaseUrl: URL;
 try {
-  metadataBaseUrl = new URL(siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`);
+  metadataBaseUrl = new URL(siteConfig.siteUrl);
 } catch {
-  metadataBaseUrl = new URL('https://geoshield.research.org');
+  metadataBaseUrl = new URL('https://geoshield-hazel.vercel.app');
 }
 
 export const metadata: Metadata = {
