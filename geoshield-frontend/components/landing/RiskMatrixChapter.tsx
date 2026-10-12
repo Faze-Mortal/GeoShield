@@ -113,11 +113,12 @@ export default function RiskMatrixChapter() {
 
   return (
     <section
-      id="chapter-6"
+      id="how-layers-become-current-risk"
       aria-labelledby="matrix-title"
-      className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full border-b border-slate-800/80"
+      className="scroll-mt-16 md:scroll-mt-20 py-24 md:py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full border-b border-slate-800/80"
     >
-      {/* Chapter Marker */}
+      <div id="chapter-6" className="w-full">
+        {/* Chapter Marker */}
       <ScrollReveal variant="fade-up" delay={0}>
         <div className="flex items-center gap-2 mb-3">
           <span className="font-mono text-xs font-semibold text-sky-400 uppercase tracking-widest px-2.5 py-1 rounded border border-sky-400/30 bg-sky-950/40">
@@ -405,6 +406,7 @@ export default function RiskMatrixChapter() {
           </div>
         </div>
       </ScrollReveal>
+      </div>
     </section>
   );
 }

@@ -50,13 +50,28 @@ export default function LandingHeader({ progress = 0 }: LandingHeaderProps) {
 
         {/* Navigation & CTAs */}
         <div className="flex items-center gap-3 sm:gap-5">
-          <Link
-            href="/dashboard"
+          <a
+            href="#how-layers-become-current-risk"
+            onClick={(e) => {
+              const target = document.getElementById('how-layers-become-current-risk');
+              if (target) {
+                e.preventDefault();
+                const prefersReducedMotion =
+                  typeof window !== 'undefined' &&
+                  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                target.scrollIntoView({
+                  behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                  block: 'start',
+                });
+                window.history.pushState(null, '', '#how-layers-become-current-risk');
+              }
+            }}
             className="text-xs text-slate-300 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 rounded px-1.5 py-1"
-            title="Jump directly to the operational map"
+            title="Jump to the How the Layers Become Current Risk section"
           >
-            Skip to the map &rarr;
-          </Link>
+            <span>Explore How Risk Is Calculated</span>
+            <span aria-hidden="true"> &rarr;</span>
+          </a>
 
           <Link
             href="/dashboard"
