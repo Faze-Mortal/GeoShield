@@ -16,6 +16,15 @@
   --text-contrast: #f8fafc;
   --text-muted-strong: #cbd5e1;
   --text-placeholder: #cbd5e1;
+  --reveal-fade-left: translateY(16px);
+  --reveal-fade-right: translateY(16px);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --reveal-fade-left: translateX(24px);
+    --reveal-fade-right: translateX(-24px);
+  }
 }
 
 @theme inline {
