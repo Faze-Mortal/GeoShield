@@ -214,12 +214,11 @@ const GeoShieldMap = forwardRef<GeoShieldMapHandle, GeoShieldMapProps>(function 
         // If connected but failed transiently, try one safe retry after brief backoff
         try {
           await new Promise<void>((resolve) => {
-            let timer: ReturnType<typeof setTimeout>;
             const onAbort = () => {
               clearTimeout(timer);
               resolve();
             };
-            timer = setTimeout(() => {
+            const timer = setTimeout(() => {
               controller.signal.removeEventListener('abort', onAbort);
               resolve();
             }, 1500);
