@@ -154,8 +154,8 @@ export default function TemporalPivotChapter() {
                     {YEAR_DATA.map((row, idx) => {
                       const widthPercent = (row.count / 1029) * 100;
                       return (
-                        <div key={row.year} className="flex items-center gap-3.5 text-xs sm:text-sm" role="listitem">
-                          <span className="font-mono w-14 text-slate-200 font-bold shrink-0 text-right">
+                        <div key={row.year} className="flex items-center gap-2 sm:gap-3.5 text-xs sm:text-sm" role="listitem">
+                          <span className="font-mono w-11 sm:w-14 text-slate-200 font-bold shrink-0 text-right">
                             {row.year}
                           </span>
                           <div className="flex-1 h-7 bg-[#070b13] rounded-md overflow-hidden flex items-center p-0.5 border border-slate-800/90 shadow-inner">
@@ -169,7 +169,7 @@ export default function TemporalPivotChapter() {
                               aria-hidden="true"
                             />
                           </div>
-                          <span className="font-mono w-32 text-right shrink-0">
+                          <span className="font-mono w-24 sm:w-32 text-right shrink-0">
                             <strong className={row.highlight ? 'text-amber-300 font-bold text-base' : 'text-slate-200'}>
                               {row.count.toLocaleString()}
                             </strong>{' '}

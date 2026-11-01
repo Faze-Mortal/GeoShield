@@ -106,7 +106,7 @@ export default function MechanicsChapter() {
                     key={s.step}
                     type="button"
                     onClick={() => setActiveStage(idx)}
-                    className={`h-9 px-3.5 rounded text-xs font-mono font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                    className={`min-h-[38px] sm:h-9 px-3.5 rounded text-xs font-mono font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
                       activeStage === idx
                         ? 'bg-sky-600 text-white border border-sky-400 shadow-md shadow-sky-950'
                         : 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white'

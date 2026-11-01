@@ -45,8 +45,10 @@ export default function ScrollReveal({
     // Check user preference for reduced motion
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (mediaQuery.matches) {
-      setIsReducedMotion(true);
-      setIsVisible(true);
+      queueMicrotask(() => {
+        setIsReducedMotion(true);
+        setIsVisible(true);
+      });
       return;
     }
 
@@ -61,7 +63,7 @@ export default function ScrollReveal({
 
     // Fallback: if IntersectionObserver is unsupported, reveal immediately
     if (!('IntersectionObserver' in window)) {
-      setIsVisible(true);
+      queueMicrotask(() => setIsVisible(true));
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
 
@@ -102,18 +104,16 @@ export default function ScrollReveal({
 
   // Base initial vs visible styling mapping
   const getVariantStyles = (): { initial: React.CSSProperties; active: React.CSSProperties } => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
     switch (variant) {
       case 'fade-left':
         return {
-          initial: { opacity: 0, transform: isMobile ? 'translateY(16px)' : 'translateX(24px)' },
-          active: { opacity: 1, transform: isMobile ? 'translateY(0)' : 'translateX(0)' },
+          initial: { opacity: 0, transform: 'var(--reveal-fade-left)' },
+          active: { opacity: 1, transform: 'translate(0, 0)' },
         };
       case 'fade-right':
         return {
-          initial: { opacity: 0, transform: isMobile ? 'translateY(16px)' : 'translateX(-24px)' },
-          active: { opacity: 1, transform: isMobile ? 'translateY(0)' : 'translateX(0)' },
+          initial: { opacity: 0, transform: 'var(--reveal-fade-right)' },
+          active: { opacity: 1, transform: 'translate(0, 0)' },
         };
       case 'scale-in':
         return {

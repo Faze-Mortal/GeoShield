@@ -131,7 +131,7 @@ export default function HeroChapter() {
 
           {/* Key Study Area Dimensions (Authoritative Fact Sheet) */}
           <ScrollReveal variant="fade-up" delay={200} className="w-full">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full p-4 rounded-lg border border-slate-800 bg-[#0d1527]/90 shadow-xl mb-8 backdrop-blur-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full p-3 sm:p-4 rounded-lg border border-slate-800 bg-[#0d1527]/90 shadow-xl mb-8 backdrop-blur-xs">
               <div className="p-1">
                 <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400">Resolution</div>
                 <div className="text-base sm:text-lg font-bold font-mono text-white mt-0.5">500 &times; 500 m</div>

@@ -26,13 +26,13 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <Link
             href="/"
-            className="w-full sm:w-auto px-5 py-2.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-xs font-mono font-medium text-slate-200 hover:text-white transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2"
+            className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center px-5 py-2.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-xs font-mono font-medium text-slate-200 hover:text-white transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2"
           >
             ← Return to the Story
           </Link>
           <Link
             href="/dashboard"
-            className="w-full sm:w-auto px-5 py-2.5 rounded bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-mono font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2"
+            className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center px-5 py-2.5 rounded bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-mono font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2"
           >
             Open the Risk Map →
           </Link>

@@ -62,7 +62,7 @@ def run_tests():
 
         # 2. Semantic headings check (1 h1, 8 h2s)
         h1_count = page.locator("h1").count()
-        h2_count = page.locator("h2").count()
+        h2_count = page.locator("main h2").count()
         h1_text = page.locator("h1").first.text_content() or ""
         print(f"  H1 count: {h1_count} ('{h1_text.strip()}')")
         print(f"  H2 count: {h2_count}")

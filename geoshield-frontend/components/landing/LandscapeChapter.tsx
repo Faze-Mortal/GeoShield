@@ -88,7 +88,7 @@ export default function LandscapeChapter() {
                   key={layer.id}
                   type="button"
                   onClick={() => setActiveLayer(layer.id)}
-                  className={`h-8 px-2.5 rounded text-xs font-mono transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
+                  className={`min-h-[36px] sm:h-8 px-2.5 rounded text-xs font-mono transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
                     activeLayer === layer.id
                       ? 'bg-sky-600 text-white border border-sky-400 font-semibold'
                       : 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white'

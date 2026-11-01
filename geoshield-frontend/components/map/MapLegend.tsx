@@ -7,10 +7,10 @@ export default function MapLegend() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="absolute bottom-6 left-4 z-10 font-sans">
+    <div className="absolute bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] left-3 sm:left-4 z-10 font-sans">
       <button
         onClick={() => setCollapsed((c) => !c)}
-        className="mb-1 flex items-center gap-1.5 rounded border border-slate-700/60 bg-[#0d1527]/95 px-2.5 py-1 text-[11px] font-medium tracking-wide text-slate-300 backdrop-blur-md hover:bg-slate-800 transition-colors md:hidden"
+        className="mb-1 flex items-center gap-1.5 rounded border border-slate-700/60 bg-[#0d1527]/95 px-3.5 py-2 min-h-[40px] sm:min-h-0 text-[11px] font-medium tracking-wide text-slate-300 backdrop-blur-md hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 transition-colors md:hidden"
         aria-label={collapsed ? 'Show legend' : 'Hide legend'}
       >
         <span>Risk Legend</span>

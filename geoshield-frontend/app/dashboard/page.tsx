@@ -226,11 +226,11 @@ export default function DashboardPage() {
 
   return (
     <ErrorBoundary>
-      <div id="main-content" className="relative flex h-screen w-screen flex-col overflow-hidden bg-[#090e17] font-sans text-slate-100 select-none">
+      <div id="main-content" className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#090e17] font-sans text-slate-100 select-none">
         {/* Slim Operational Header Bar (h-11) */}
-        <header className="z-20 flex h-11 w-full shrink-0 items-center justify-between border-b border-slate-800 bg-[#0d1527] px-3.5">
+        <header className="z-20 flex h-11 w-full shrink-0 items-center justify-between border-b border-slate-800 bg-[#0d1527] px-2.5 sm:px-3.5 pt-[env(safe-area-inset-top)]">
           {/* Brand & Region (Links to /) */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink">
             <Link
               href="/"
               className="flex items-center gap-2 group rounded px-1 -mx-1 py-0.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 transition-colors"
@@ -256,9 +256,9 @@ export default function DashboardPage() {
 
             <div className="h-3 w-px bg-slate-800" />
 
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-              <span>Kullu &middot; Mandi, HP</span>
-              <span className="font-mono text-[10px] text-slate-500">[500m Grid]</span>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 truncate">
+              <span className="hidden xs:inline truncate">Kullu &middot; Mandi, HP</span>
+              <span className="font-mono text-[10px] text-slate-500 shrink-0 hidden sm:inline">[500m Grid]</span>
               {IS_MOCK_ENABLED && (
                 <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.2 text-[9px] font-bold text-amber-300">
                   MOCK
@@ -268,7 +268,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink">
             {/* API Status */}
             <div
               className="flex items-center gap-1.5 text-[11px]"
@@ -308,7 +308,7 @@ export default function DashboardPage() {
             {/* Methodology button */}
             <button
               onClick={() => setMethodologyOpen(true)}
-              className="rounded border border-slate-700/80 bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+              className="min-h-[36px] sm:min-h-0 rounded border border-slate-700/80 bg-slate-800/80 px-2.5 sm:px-2.5 py-1.5 sm:py-1 text-[11px] sm:text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors shrink-0 inline-flex items-center"
             >
               Methodology
             </button>

@@ -159,7 +159,7 @@ export default function RiskMatrixChapter() {
           <button
             type="button"
             onClick={() => handleSelectRealCell('r0142_c0087')}
-            className={`h-9 px-3.5 rounded-lg text-xs font-mono font-medium border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+            className={`min-h-[38px] px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium border transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
               isRealCellActive1
                 ? 'border-sky-400 bg-sky-950/90 text-white shadow-md'
                 : 'border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700'
@@ -171,7 +171,7 @@ export default function RiskMatrixChapter() {
           <button
             type="button"
             onClick={() => handleSelectRealCell('r0137_c0204')}
-            className={`h-9 px-3.5 rounded-lg text-xs font-mono font-medium border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+            className={`min-h-[38px] px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium border transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
               isRealCellActive2
                 ? 'border-sky-400 bg-sky-950/90 text-white shadow-md'
                 : 'border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700'
@@ -207,7 +207,7 @@ export default function RiskMatrixChapter() {
                   role="grid"
                   aria-label="3 by 3 Current Risk Decision Matrix"
                   aria-readonly="true"
-                  className="min-w-[360px]"
+                  className="min-w-[300px] sm:min-w-[360px]"
                 >
                   {/* Table Header: Trigger State (Columns) */}
                   <div className="grid grid-cols-4 gap-2.5 mb-2.5 text-center text-xs font-mono">
@@ -241,13 +241,18 @@ export default function RiskMatrixChapter() {
                       <div key={bin} className="grid grid-cols-4 gap-2.5 mb-2.5" role="row">
                         {/* Row header label */}
                         <div
-                          className={`flex items-center justify-start px-3 py-2.5 rounded-lg text-xs font-mono transition-colors ${
+                          className={`flex items-center justify-start px-2 py-1.5 sm:px-3 sm:py-2.5 rounded-lg text-[11px] sm:text-xs font-mono transition-colors leading-tight ${
                             isRowActive
                               ? 'bg-amber-950/50 text-amber-200 font-bold border border-amber-500/50 shadow-xs'
                               : 'bg-slate-900/40 text-slate-400 border border-slate-800/80'
                           }`}
                         >
-                          <span className="truncate">{rowLabel}</span>
+                          <span className="leading-snug break-words">
+                            {bin}{' '}
+                            <span className="inline-block whitespace-nowrap opacity-90">
+                              {bin === 'Low' ? '(<33)' : bin === 'Moderate' ? '(33–66)' : '(≥66)'}
+                            </span>
+                          </span>
                         </div>
 
                         {/* 3 Cells in Row */}

@@ -62,7 +62,7 @@ export default function MethodologyModal({ isOpen, onClose }: MethodologyModalPr
           <button
             ref={closeBtnRef}
             onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400"
+            className="rounded p-2 min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400"
             aria-label="Close dialog"
           >
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

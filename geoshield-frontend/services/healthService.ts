@@ -115,8 +115,7 @@ export async function wakeUpBackend(options: {
   // If the unmount aborted `controller`, it would kill the in-flight cold-start loop.
   // Instead, the singleton loop runs to completion and updates all subscribers.
 
-  let currentPromise: Promise<boolean>;
-  currentPromise = (async (): Promise<boolean> => {
+  const currentPromise: Promise<boolean> = (async (): Promise<boolean> => {
     updateState({
       status: 'checking',
       attempt: 1,
@@ -193,12 +192,11 @@ export async function wakeUpBackend(options: {
         const delayMs = baseDelay + jitter;
 
         await new Promise<void>((resolve) => {
-          let timer: ReturnType<typeof setTimeout>;
           const onAbort = () => {
             clearTimeout(timer);
             resolve();
           };
-          timer = setTimeout(() => {
+          const timer = setTimeout(() => {
             controller.signal.removeEventListener('abort', onAbort);
             resolve();
           }, delayMs);
