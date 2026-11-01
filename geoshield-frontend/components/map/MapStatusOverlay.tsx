@@ -27,7 +27,7 @@ export default function MapStatusOverlay({ status, onRetry, onZoomIn, backendSta
           </p>
           <button
             onClick={onZoomIn}
-            className="mt-2.5 rounded bg-sky-600 px-3 py-1 text-xs font-medium text-white hover:bg-sky-500 transition-colors"
+            className="mt-2.5 min-h-[38px] sm:min-h-0 rounded bg-sky-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 transition-colors"
           >
             Zoom to Grid
           </button>
@@ -83,8 +83,8 @@ export default function MapStatusOverlay({ status, onRetry, onZoomIn, backendSta
       )}
 
       {/* Cell count + zoom chip */}
-      <div className="absolute bottom-6 right-4 z-10 font-mono">
-        <div className="rounded border border-slate-700/70 bg-[#0d1527]/95 px-2.5 py-1 text-[11px] text-slate-300 backdrop-blur-md flex items-center gap-2">
+      <div className="absolute bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] right-[calc(0.75rem+env(safe-area-inset-right,0px))] sm:bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] sm:right-[calc(1rem+env(safe-area-inset-right,0px))] z-10 font-mono pointer-events-none">
+        <div className="pointer-events-auto rounded border border-slate-700/70 bg-[#0d1527]/95 px-2.5 py-1 text-[11px] text-slate-300 backdrop-blur-md flex items-center gap-2">
           {status.cellCount > 0 && (
             <span className="font-semibold text-slate-200">{status.cellCount.toLocaleString()} cells</span>
           )}

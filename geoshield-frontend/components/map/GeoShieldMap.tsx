@@ -319,7 +319,7 @@ const GeoShieldMap = forwardRef<GeoShieldMapHandle, GeoShieldMapProps>(function 
         [DATA_BBOX.minLon - 1, DATA_BBOX.minLat - 1],
         [DATA_BBOX.maxLon + 1, DATA_BBOX.maxLat + 1],
       ],
-      attributionControl: { compact: false },
+      attributionControl: { compact: true },
     });
 
     if (typeof window !== 'undefined') {
@@ -471,7 +471,17 @@ const GeoShieldMap = forwardRef<GeoShieldMapHandle, GeoShieldMapProps>(function 
 
     mapRef.current = map;
 
+    const resizeObserver = new ResizeObserver(() => {
+      if (mapRef.current) {
+        mapRef.current.resize();
+      }
+    });
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
+      resizeObserver.disconnect();
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (typeof window !== 'undefined') {
         delete (window as unknown as { _geoshieldMap?: maplibregl.Map })._geoshieldMap;

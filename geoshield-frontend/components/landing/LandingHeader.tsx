@@ -9,7 +9,7 @@ interface LandingHeaderProps {
 
 export default function LandingHeader({ progress = 0 }: LandingHeaderProps) {
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-[#090e17]/90 backdrop-blur-md border-b border-slate-800/80 transition-colors">
+    <header className="fixed top-0 left-0 right-0 z-40 bg-[#090e17]/90 backdrop-blur-md border-b border-slate-800/80 transition-colors pt-[env(safe-area-inset-top,0px)]">
       {/* Mobile scroll progress line */}
       <div
         className="h-0.5 bg-sky-400 transition-all duration-150 md:hidden"
@@ -66,7 +66,7 @@ export default function LandingHeader({ progress = 0 }: LandingHeaderProps) {
                 window.history.pushState(null, '', '#how-layers-become-current-risk');
               }
             }}
-            className="text-[11px] sm:text-xs text-slate-300 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 rounded px-1.5 py-0.5 sm:py-1 whitespace-nowrap"
+            className="text-[11px] sm:text-xs text-slate-300 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 rounded px-2 py-1.5 min-h-[36px] sm:min-h-0 inline-flex items-center whitespace-nowrap"
             title="Jump to the How the Layers Become Current Risk section"
           >
             <span>Explore How Risk Is Calculated</span>
@@ -75,7 +75,7 @@ export default function LandingHeader({ progress = 0 }: LandingHeaderProps) {
 
           <Link
             href="/dashboard"
-            className="inline-flex items-center justify-center gap-1.5 min-h-[28px] sm:h-8 rounded border border-sky-400/40 bg-sky-600 hover:bg-sky-500 text-white px-2.5 sm:px-3 py-1 sm:py-0 text-[11px] sm:text-xs font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-1.5 min-h-[38px] sm:h-8 rounded border border-sky-400/40 bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 sm:py-0 text-[11px] sm:text-xs font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 whitespace-nowrap"
           >
             <span>Explore the Risk Map</span>
             <svg

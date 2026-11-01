@@ -48,7 +48,7 @@ export default function SearchBar({ onSearch, searching, error, disabled = false
   const formatHint = value.trim().length > 0 && !/^r\d{4}_c\d{4}$/i.test(value.trim());
 
   return (
-    <div className="absolute top-4 left-4 z-20 w-76 md:w-84 font-sans rounded border border-slate-700/90 bg-[#0d1527]/96 p-2 shadow-xl backdrop-blur-xs">
+    <div className="absolute top-4 left-3 sm:left-4 z-20 w-[calc(100vw-4.5rem)] max-w-xs md:w-84 font-sans rounded border border-slate-700/90 bg-[#0d1527]/96 p-2 shadow-xl backdrop-blur-xs">
       <form onSubmit={handleSubmit} className="relative flex items-center">
         <input
           ref={inputRef}
@@ -57,13 +57,13 @@ export default function SearchBar({ onSearch, searching, error, disabled = false
           onChange={(e) => setValue(e.target.value)}
           placeholder="Search cell ID (e.g. r0142_c0087)"
           aria-label="Search cell ID"
-          className="h-8.5 w-full rounded border border-slate-400 bg-[#152238] pl-3 pr-14 text-xs font-normal text-slate-50 placeholder:text-slate-300 placeholder:opacity-100 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="h-10 sm:h-9 w-full rounded border border-slate-400 bg-[#152238] pl-3 pr-14 text-base md:text-xs font-normal text-slate-50 placeholder:text-slate-300 placeholder:opacity-100 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           disabled={searching || disabled}
         />
         <button
           type="submit"
           disabled={searching || disabled || !value.trim()}
-          className="absolute right-1 top-1/2 -translate-y-1/2 h-6.5 rounded px-2.5 text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[36px] sm:min-h-[28px] min-w-[40px] flex items-center justify-center rounded px-3 text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           aria-label="Search"
         >
           {searching ? '...' : 'Go'}
@@ -95,7 +95,7 @@ export default function SearchBar({ onSearch, searching, error, disabled = false
             type="button"
             onClick={() => fillExample('r0142_c0087')}
             disabled={disabled}
-            className="h-7 inline-flex items-center rounded border border-slate-400 bg-slate-800/90 px-2.5 text-xs font-mono font-medium text-slate-100 hover:text-white hover:bg-slate-700 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="min-h-[36px] sm:min-h-0 sm:h-7 inline-flex items-center rounded border border-slate-400 bg-slate-800/90 px-2.5 text-xs font-mono font-medium text-slate-100 hover:text-white hover:bg-slate-700 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             r0142_c0087
           </button>
@@ -103,7 +103,7 @@ export default function SearchBar({ onSearch, searching, error, disabled = false
             type="button"
             onClick={() => fillExample('r0137_c0204')}
             disabled={disabled}
-            className="h-7 inline-flex items-center rounded border border-slate-400 bg-slate-800/90 px-2.5 text-xs font-mono font-medium text-slate-100 hover:text-white hover:bg-slate-700 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="min-h-[36px] sm:min-h-0 sm:h-7 inline-flex items-center rounded border border-slate-400 bg-slate-800/90 px-2.5 text-xs font-mono font-medium text-slate-100 hover:text-white hover:bg-slate-700 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             r0137_c0204
           </button>

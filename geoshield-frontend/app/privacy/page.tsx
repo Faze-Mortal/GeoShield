@@ -13,17 +13,17 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-[#090e17] text-slate-200 antialiased flex flex-col selection:bg-sky-500/30 selection:text-sky-200">
       {/* Header Landmark */}
       <header className="border-b border-slate-800/80 bg-[#0c1322]/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
           <Link
             href="/"
             className="flex items-center gap-2.5 text-slate-100 hover:text-sky-400 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2 rounded"
           >
             <span className="font-serif italic font-bold text-lg tracking-tight">GeoShield</span>
-            <span className="text-xs px-2 py-0.5 rounded bg-slate-800/80 text-slate-400 border border-slate-700/60 font-mono">
+            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded bg-slate-800/80 text-slate-400 border border-slate-700/60 font-mono">
               Research
             </span>
           </Link>
-          <nav aria-label="Page navigation" className="flex items-center gap-4 text-xs font-mono">
+          <nav aria-label="Page navigation" className="flex items-center gap-1.5 sm:gap-4 text-[11px] sm:text-xs font-mono shrink-0">
             <Link
               href="/"
               className="text-slate-400 hover:text-slate-100 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded px-1.5 py-1"
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
       </header>
 
       {/* Main Content Landmark */}
-      <main id="main-content" className="flex-1 max-w-4xl mx-auto px-6 py-12 w-full">
+      <main id="main-content" className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full">
         <article className="prose prose-invert max-w-none space-y-8">
           <div>
             <p className="text-xs font-mono uppercase tracking-widest text-sky-400 mb-2">
@@ -189,7 +189,7 @@ export default function PrivacyPage() {
       <footer className="border-t border-slate-800/80 bg-[#080d15] py-8 text-xs text-slate-400 mt-12">
         <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 GeoShield. Free Academic & Research Project.</p>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-5 gap-y-2">
             <Link href="/" className="hover:text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-sky-400 rounded">
               Story
             </Link>

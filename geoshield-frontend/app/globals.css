@@ -117,3 +117,12 @@ input::placeholder {
   font-size: 10px !important;
   font-family: var(--font-geist-mono), monospace !important;
 }
+/* Ensure MapLibre controls respect mobile safe-area insets */
+.maplibregl-ctrl-bottom-right {
+  margin-bottom: env(safe-area-inset-bottom, 0px) !important;
+  margin-right: env(safe-area-inset-right, 0px) !important;
+}
+.maplibregl-ctrl-bottom-left {
+  margin-bottom: env(safe-area-inset-bottom, 0px) !important;
+  margin-left: env(safe-area-inset-left, 0px) !important;
+}

@@ -93,7 +93,7 @@ export default function SimulationPanel({
             onClick={() => handleSimulate(pct)}
             disabled={loading || disabled}
             title={disabled ? 'API connecting...' : undefined}
-            className={`flex-1 rounded py-1 text-xs font-semibold transition-colors ${
+            className={`flex-1 rounded py-2 md:py-1 min-h-[40px] md:min-h-0 text-xs font-semibold transition-colors ${
               activePercent === pct
                 ? 'bg-sky-600 text-white border border-sky-400'
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-750 hover:text-white border border-slate-700/70'
@@ -106,7 +106,7 @@ export default function SimulationPanel({
           <button
             onClick={handleReset}
             disabled={loading || disabled}
-            className="rounded px-2.5 py-1 text-xs font-medium text-slate-400 hover:text-slate-200 border border-slate-700/60 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="rounded px-2.5 py-2 md:py-1 min-h-[40px] md:min-h-0 text-xs font-medium text-slate-400 hover:text-slate-200 border border-slate-700/60 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Reset
           </button>
@@ -144,25 +144,25 @@ export default function SimulationPanel({
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-700/80 bg-slate-850/60 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                  <th className="p-2 w-1/3">Metric</th>
-                  <th className="p-2 w-1/3">Baseline (0%)</th>
-                  <th className="p-2 w-1/3 text-sky-300">Sim (+{simResult.rainfall_adjustment_percent}%)</th>
+                  <th className="p-1.5 sm:p-2 w-1/3">Metric</th>
+                  <th className="p-1.5 sm:p-2 w-1/3">Baseline (0%)</th>
+                  <th className="p-1.5 sm:p-2 w-1/3 text-sky-300">Sim (+{simResult.rainfall_adjustment_percent}%)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80 text-[11px]">
+              <tbody className="divide-y divide-slate-800/80 text-[10px] sm:text-[11px]">
                 <tr>
-                  <td className="p-2 text-slate-400 font-medium">Trigger State</td>
-                  <td className="p-2 text-slate-300 font-mono">{simResult.original_trigger_state}</td>
-                  <td className="p-2 font-mono font-semibold text-slate-100">
+                  <td className="p-1.5 sm:p-2 text-slate-400 font-medium">Trigger State</td>
+                  <td className="p-1.5 sm:p-2 text-slate-300 font-mono">{simResult.original_trigger_state}</td>
+                  <td className="p-1.5 sm:p-2 font-mono font-semibold text-slate-100">
                     {simResult.simulated_trigger_state}
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-2 text-slate-400 font-medium">Current Risk</td>
-                  <td className="p-2 font-medium" style={{ color: getRiskStyle(simResult.original_current_risk).textColor || '#f8fafc' }}>
+                  <td className="p-1.5 sm:p-2 text-slate-400 font-medium">Current Risk</td>
+                  <td className="p-1.5 sm:p-2 font-medium" style={{ color: getRiskStyle(simResult.original_current_risk).textColor || '#f8fafc' }}>
                     {simResult.original_current_risk}
                   </td>
-                  <td className="p-2 font-bold" style={{ color: getRiskStyle(simResult.simulated_current_risk).textColor || '#38bdf8' }}>
+                  <td className="p-1.5 sm:p-2 font-bold" style={{ color: getRiskStyle(simResult.simulated_current_risk).textColor || '#38bdf8' }}>
                     {simResult.simulated_current_risk}
                   </td>
                 </tr>

@@ -202,7 +202,7 @@ export default function LimitationsChapter() {
           </div>
           <a
             href="#chapter-1"
-            className="text-xs text-sky-400 hover:text-sky-300 font-mono transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 rounded px-1"
+            className="text-xs text-sky-400 hover:text-sky-300 font-mono transition-colors flex items-center gap-1 min-h-[36px] sm:min-h-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 rounded px-1"
           >
             <span>&uarr; Back to top</span>
           </a>

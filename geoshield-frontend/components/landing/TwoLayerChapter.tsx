@@ -191,7 +191,7 @@ export default function TwoLayerChapter() {
       {/* Layer Convergence Diagram to Chapter 6 */}
       <ScrollReveal variant="fade-up" delay={240}>
         <div className="rounded-xl border border-slate-800 bg-[#0d1527] p-5 text-center flex flex-col items-center justify-center">
-          <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs font-mono text-slate-400">
             <span className="text-amber-400 font-bold">Layer A (Terrain Predisposition)</span>
             <span>+</span>
             <span className="text-sky-400 font-bold">Layer B (Rainfall Triggers)</span>

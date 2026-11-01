@@ -102,7 +102,7 @@ export default function SimulationChapter() {
                       key={step}
                       type="button"
                       onClick={() => setSliderValue(step)}
-                      className={`h-8 px-3 rounded-md text-xs font-mono font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                      className={`min-h-[38px] sm:h-8 px-3 rounded-md text-xs font-mono font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
                         sliderValue === step
                           ? 'bg-sky-600 text-white border border-sky-400 shadow-sm'
                           : 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white'
