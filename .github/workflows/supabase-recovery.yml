@@ -1,0 +1,43 @@
+name: Supabase Health Monitor and Recovery
+
+'on':
+  schedule:
+    # Runs at minute 17 past every 4th hour UTC (00:17, 04:17, 08:17, 12:17, 16:17, 20:17 UTC)
+    - cron: '17 */4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-recovery
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  monitor-and-recover:
+    name: Supabase Monitor & GeoShield Read Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify recovery test suite
+        run: |
+          python -m unittest discover tests -v
+
+      - name: Run Supabase Monitoring and Recovery
+        env:
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'vkjogbutsjamlwsiotfe' }}
+          GEOSHIELD_API_BASE_URL: ${{ vars.GEOSHIELD_API_BASE_URL || 'https://geoshield-api-9nl7.onrender.com' }}
+          ENABLE_SUPABASE_AUTO_RESTORE: ${{ vars.ENABLE_SUPABASE_AUTO_RESTORE || 'false' }}
+          SUPABASE_STATUS_TOKEN: ${{ secrets.SUPABASE_STATUS_TOKEN }}
+          SUPABASE_RESTORE_TOKEN: ${{ secrets.SUPABASE_RESTORE_TOKEN }}
+        run: |
+          python scripts/supabase_recovery.py
