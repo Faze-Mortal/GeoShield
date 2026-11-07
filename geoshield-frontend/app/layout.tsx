@@ -53,6 +53,9 @@ export const metadata: Metadata = {
       'High-resolution landslide hazard assessment and empirical rainfall triggers across 500m spatial cells.',
     type: 'website',
   },
+  verification: {
+    google: 'ddTN_ydTMrNaIVu0P61ZW7WULIRMiH_6qsTqWQDMbG4',
+  },
 };
 
 export default function RootLayout({
