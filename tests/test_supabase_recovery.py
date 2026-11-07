@@ -9,6 +9,8 @@ No real credentials or remote network connections are required.
 import json
 import os
 import unittest
+import urllib.error
+import urllib.request
 from unittest.mock import MagicMock, patch
 
 from scripts.supabase_recovery import (
@@ -16,6 +18,8 @@ from scripts.supabase_recovery import (
     GeoShieldVerificationClient,
     RecoveryConfig,
     SafeLogger,
+    SafeRenderRedirectHandler,
+    StrictNoRedirectHandler,
     SupabaseApiClient,
     SupabaseMonitorOrchestrator,
     STATUS_ACTIVE_HEALTHY,
@@ -76,6 +80,102 @@ class TestSafeLogger(unittest.TestCase):
         self.assertNotIn(token_a, masked)
         self.assertNotIn(token_b, masked)
         self.assertEqual(masked, "Querying API with [REDACTED] and restore [REDACTED]")
+
+
+class TestRedirectHandlers(unittest.TestCase):
+    """Tests that redirect handlers prevent token forwarding and insecure traversals."""
+
+    def test_strict_no_redirect_handler_rejects_301_302_303_307_308(self):
+        handler = StrictNoRedirectHandler()
+        req = urllib.request.Request(
+            "https://api.supabase.com/v1/projects/test",
+            headers={"Authorization": "Bearer sb_secret"},
+        )
+
+        # redirect_request must return None
+        self.assertIsNone(handler.redirect_request(req, None, 301, "Moved Permanently", {}, "https://evil.com"))
+
+        # http_error_30X must raise HTTPError
+        for code in (301, 302, 303, 307, 308):
+            method = getattr(handler, f"http_error_{code}")
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                method(req, None, code, "Redirect", {})
+            self.assertEqual(ctx.exception.code, code)
+            self.assertIn("rejected for authenticated Supabase API call", str(ctx.exception))
+            self.assertNotIn("sb_secret", str(ctx.exception))
+
+    def test_safe_render_redirect_handler_rejects_http_downgrade(self):
+        handler = SafeRenderRedirectHandler()
+        req = urllib.request.Request("https://geoshield-api-9nl7.onrender.com/grid?limit=1")
+
+        with self.assertRaises(urllib.error.HTTPError) as ctx:
+            handler.redirect_request(req, None, 302, "Found", {}, "http://geoshield-api-9nl7.onrender.com/grid?limit=1")
+        self.assertIn("Insecure redirect scheme 'http' rejected", str(ctx.exception))
+
+    def test_safe_render_redirect_handler_rejects_cross_host(self):
+        handler = SafeRenderRedirectHandler()
+        req = urllib.request.Request("https://geoshield-api-9nl7.onrender.com/grid?limit=1")
+
+        with self.assertRaises(urllib.error.HTTPError) as ctx:
+            handler.redirect_request(req, None, 302, "Found", {}, "https://malicious-external-site.com/grid?limit=1")
+        self.assertIn("Cross-host redirect to 'malicious-external-site.com' rejected", str(ctx.exception))
+
+    def test_safe_render_redirect_handler_allows_same_host_https(self):
+        handler = SafeRenderRedirectHandler()
+        req = urllib.request.Request("https://geoshield-api-9nl7.onrender.com/grid?limit=1")
+
+        redirected_req = handler.redirect_request(
+            req, None, 302, "Found", {}, "https://geoshield-api-9nl7.onrender.com/v1/grid?limit=1"
+        )
+        self.assertIsNotNone(redirected_req)
+        self.assertEqual(redirected_req.full_url, "https://geoshield-api-9nl7.onrender.com/v1/grid?limit=1")
+
+
+class TestSupabaseApiClient(unittest.TestCase):
+    """Tests Supabase Management API client calls and redirect rejection."""
+
+    def setUp(self):
+        self.logger = SafeLogger(secrets_to_mask=["sb_secret_token_123"])
+        self.client = SupabaseApiClient(self.logger)
+
+    @patch("urllib.request.OpenerDirector.open")
+    def test_get_project_status_success(self, mock_open):
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.read.return_value = json.dumps({"status": "ACTIVE_HEALTHY"}).encode("utf-8")
+        mock_open.return_value.__enter__.return_value = mock_resp
+
+        code, status, err = self.client.get_project_status("test_ref", "sb_secret_token_123")
+        self.assertEqual(code, 200)
+        self.assertEqual(status, "ACTIVE_HEALTHY")
+        self.assertIsNone(err)
+
+    @patch("urllib.request.OpenerDirector.open")
+    def test_authenticated_redirect_rejected_and_token_not_leaked(self, mock_open):
+        """Verify redirect error on authenticated endpoint is caught safely and token is redacted."""
+        mock_open.side_effect = urllib.error.HTTPError(
+            "https://api.supabase.com/v1/projects/test_ref",
+            307,
+            "HTTP redirect (HTTP 307) rejected for authenticated Supabase API call",
+            {},
+            None,
+        )
+
+        code, status, err = self.client.get_project_status("test_ref", "sb_secret_token_123")
+        self.assertEqual(code, 307)
+        self.assertIsNone(status)
+        self.assertIn("Redirects rejected for security", err)
+        self.assertNotIn("sb_secret_token_123", err)
+
+    @patch("urllib.request.OpenerDirector.open")
+    def test_restore_project_success(self, mock_open):
+        mock_resp = MagicMock()
+        mock_resp.status = 201
+        mock_open.return_value.__enter__.return_value = mock_resp
+
+        ok, msg = self.client.restore_project("test_ref", "sb_secret_token_123")
+        self.assertTrue(ok)
+        self.assertIn("Supabase restoration request accepted", msg)
 
 
 class TestSupabaseMonitorOrchestrator(unittest.TestCase):
@@ -433,6 +533,139 @@ class TestSupabaseMonitorOrchestrator(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.mock_api_client.restore_project.assert_not_called()
 
+    def test_transient_pausing_transitions_to_inactive_breaks_out_immediately(self):
+        """
+        Scenario: Project starts in PAUSING and settles to INACTIVE.
+        Orchestrator breaks out immediately without waiting full 15 minutes,
+        requires manual unpause under default auto-restore=false, and exits 1.
+        """
+        self.mock_api_client.get_project_status.side_effect = [
+            (200, "PAUSING", None),
+            (200, STATUS_INACTIVE, None),
+        ]
+        self.base_config.enable_auto_restore = False
+
+        with patch("time.sleep", return_value=None):
+            orchestrator = SupabaseMonitorOrchestrator(
+                self.base_config, self.logger, self.mock_api_client, self.mock_verifier
+            )
+            exit_code = orchestrator.run()
+
+        self.assertEqual(exit_code, 1)
+        self.mock_api_client.restore_project.assert_not_called()
+        self.mock_verifier.verify_grid_endpoint.assert_not_called()
+
+    def test_transient_going_down_transitions_to_inactive_breaks_out_immediately(self):
+        """
+        Scenario: Project starts in GOING_DOWN and settles to INACTIVE.
+        Orchestrator breaks out immediately, makes 0 restore calls, and exits 1.
+        """
+        self.mock_api_client.get_project_status.side_effect = [
+            (200, "GOING_DOWN", None),
+            (200, STATUS_INACTIVE, None),
+        ]
+        self.base_config.enable_auto_restore = False
+
+        with patch("time.sleep", return_value=None):
+            orchestrator = SupabaseMonitorOrchestrator(
+                self.base_config, self.logger, self.mock_api_client, self.mock_verifier
+            )
+            exit_code = orchestrator.run()
+
+        self.assertEqual(exit_code, 1)
+        self.mock_api_client.restore_project.assert_not_called()
+        self.mock_verifier.verify_grid_endpoint.assert_not_called()
+
+    def test_transient_pausing_transitions_to_inactive_triggers_restore_if_enabled(self):
+        """
+        Scenario: Project starts in PAUSING and settles to INACTIVE.
+        Auto-restore is enabled with restore token:
+        Orchestrator detects settling into INACTIVE, triggers restore exactly once,
+        polls to ACTIVE_HEALTHY, verifies grid, and returns 0.
+        """
+        self.mock_api_client.get_project_status.side_effect = [
+            (200, "PAUSING", None),
+            (200, STATUS_INACTIVE, None),
+            (200, "RESTORING", None),
+            (200, STATUS_ACTIVE_HEALTHY, None),
+        ]
+        self.mock_api_client.restore_project.return_value = (True, "Restore accepted")
+        self.mock_verifier.verify_grid_endpoint.return_value = (True, "Grid verified OK")
+
+        self.base_config.enable_auto_restore = True
+        self.base_config.restore_token = "valid_restore_token"
+
+        with patch("time.sleep", return_value=None):
+            orchestrator = SupabaseMonitorOrchestrator(
+                self.base_config, self.logger, self.mock_api_client, self.mock_verifier
+            )
+            exit_code = orchestrator.run()
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(self.mock_api_client.restore_project.call_count, 1)
+        self.mock_verifier.verify_grid_endpoint.assert_called_once()
+
+    def test_inactive_more_than_60s_then_transitions_to_restoring_and_active_healthy(self):
+        """
+        Scenario: Project remains INACTIVE for >60s following restore request.
+        Orchestrator does not terminate prematurely, continues polling,
+        transitions to RESTORING, then ACTIVE_HEALTHY, verifies grid, and returns 0.
+        Verifies exactly one restore POST call occurred.
+        """
+        self.mock_api_client.get_project_status.side_effect = [
+            (200, STATUS_INACTIVE, None),       # initial check
+            (200, STATUS_INACTIVE, None),       # poll at 30s
+            (200, STATUS_INACTIVE, None),       # poll at 75s (>60s)
+            (200, "RESTORING", None),           # poll at 110s
+            (200, STATUS_ACTIVE_HEALTHY, None), # poll at 140s
+        ]
+        self.mock_api_client.restore_project.return_value = (True, "Restore accepted")
+        self.mock_verifier.verify_grid_endpoint.return_value = (True, "Grid verified OK")
+
+        self.base_config.enable_auto_restore = True
+        self.base_config.restore_token = "valid_restore_token"
+        self.base_config.max_restore_wait_sec = 900
+
+        time_seq = [0.0, 0.0, 30.0, 30.0, 75.0, 75.0, 110.0, 110.0, 140.0, 140.0, 150.0]
+        with patch("time.time", side_effect=time_seq), patch("time.sleep", return_value=None):
+            orchestrator = SupabaseMonitorOrchestrator(
+                self.base_config, self.logger, self.mock_api_client, self.mock_verifier
+            )
+            exit_code = orchestrator.run()
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(self.mock_api_client.restore_project.call_count, 1)
+        self.mock_verifier.verify_grid_endpoint.assert_called_once()
+
+    def test_restoring_status_remains_inactive_until_timeout_safely_exits_one(self):
+        """
+        Scenario: After restore request is issued, project remains INACTIVE until overall timeout.
+        Orchestrator polls without terminating prematurely at 60s, hits overall timeout,
+        refuses duplicate restore attempt, and safely exits 1.
+        """
+        self.mock_api_client.get_project_status.side_effect = [
+            (200, STATUS_INACTIVE, None),  # initial check
+            (200, STATUS_INACTIVE, None),  # poll 1
+            (200, STATUS_INACTIVE, None),  # poll 2
+            (200, STATUS_INACTIVE, None),  # poll 3
+        ]
+        self.mock_api_client.restore_project.return_value = (True, "Restore accepted")
+
+        self.base_config.enable_auto_restore = True
+        self.base_config.restore_token = "valid_restore_token"
+        self.base_config.max_restore_wait_sec = 100
+
+        time_seq = [0.0, 0.0, 30.0, 30.0, 70.0, 70.0, 105.0, 105.0]
+        with patch("time.time", side_effect=time_seq), patch("time.sleep", return_value=None):
+            orchestrator = SupabaseMonitorOrchestrator(
+                self.base_config, self.logger, self.mock_api_client, self.mock_verifier
+            )
+            exit_code = orchestrator.run()
+
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(self.mock_api_client.restore_project.call_count, 1)
+        self.mock_verifier.verify_grid_endpoint.assert_not_called()
+
 
 class TestGeoShieldVerificationClient(unittest.TestCase):
     """Tests the GeoShield API real database read and cold-start retry logic."""
@@ -441,8 +674,16 @@ class TestGeoShieldVerificationClient(unittest.TestCase):
         self.logger = SafeLogger()
         self.client = GeoShieldVerificationClient(self.logger)
 
-    @patch("urllib.request.urlopen")
-    def test_valid_geojson_response_passes(self, mock_urlopen):
+    def test_insecure_scheme_rejected(self):
+        """Scenario: HTTP scheme provided for GeoShield endpoint -> immediate rejection."""
+        ok, msg = self.client.verify_grid_endpoint(
+            "http://insecure-backend.com", retry_count=1, retry_delay_sec=0, timeout_sec=5
+        )
+        self.assertFalse(ok)
+        self.assertIn("Insecure scheme 'http'", msg)
+
+    @patch("urllib.request.OpenerDirector.open")
+    def test_valid_geojson_response_passes(self, mock_open):
         """Scenario: HTTP 200 with valid FeatureCollection -> pass."""
         valid_body = json.dumps({
             "type": "FeatureCollection",
@@ -452,14 +693,14 @@ class TestGeoShieldVerificationClient(unittest.TestCase):
         mock_resp = MagicMock()
         mock_resp.status = 200
         mock_resp.read.return_value = valid_body
-        mock_urlopen.return_value.__enter__.return_value = mock_resp
+        mock_open.return_value.__enter__.return_value = mock_resp
 
         ok, msg = self.client.verify_grid_endpoint("https://api.test", retry_count=1, retry_delay_sec=0, timeout_sec=5)
         self.assertTrue(ok)
         self.assertIn("FeatureCollection with 1 feature(s)", msg)
 
-    @patch("urllib.request.urlopen")
-    def test_invalid_geojson_response_fails(self, mock_urlopen):
+    @patch("urllib.request.OpenerDirector.open")
+    def test_invalid_geojson_response_fails(self, mock_open):
         """Scenario: Invalid GeoJSON response -> verification failure."""
         invalid_body = json.dumps({
             "type": "NotAFeatureCollection",
@@ -469,14 +710,14 @@ class TestGeoShieldVerificationClient(unittest.TestCase):
         mock_resp = MagicMock()
         mock_resp.status = 200
         mock_resp.read.return_value = invalid_body
-        mock_urlopen.return_value.__enter__.return_value = mock_resp
+        mock_open.return_value.__enter__.return_value = mock_resp
 
         ok, msg = self.client.verify_grid_endpoint("https://api.test", retry_count=1, retry_delay_sec=0, timeout_sec=5)
         self.assertFalse(ok)
         self.assertIn("Invalid GeoJSON", msg)
 
-    @patch("urllib.request.urlopen")
-    def test_render_cold_start_bounded_retry_eventual_success(self, mock_urlopen):
+    @patch("urllib.request.OpenerDirector.open")
+    def test_render_cold_start_bounded_retry_eventual_success(self, mock_open):
         """Scenario: Render cold start: initial 502/503 errors followed by HTTP 200."""
         valid_body = json.dumps({
             "type": "FeatureCollection",
@@ -490,7 +731,7 @@ class TestGeoShieldVerificationClient(unittest.TestCase):
         mock_resp_ok.status = 200
         mock_resp_ok.read.return_value = valid_body
 
-        mock_urlopen.return_value.__enter__.side_effect = [
+        mock_open.return_value.__enter__.side_effect = [
             mock_resp_fail,
             mock_resp_fail,
             mock_resp_ok,
@@ -503,15 +744,15 @@ class TestGeoShieldVerificationClient(unittest.TestCase):
 
         self.assertTrue(ok)
         self.assertIn("GeoShield grid verification passed", msg)
-        self.assertEqual(mock_urlopen.call_count, 3)
+        self.assertEqual(mock_open.call_count, 3)
 
-    @patch("urllib.request.urlopen")
-    def test_render_cold_start_bounded_retry_exhaustion_fails(self, mock_urlopen):
+    @patch("urllib.request.OpenerDirector.open")
+    def test_render_cold_start_bounded_retry_exhaustion_fails(self, mock_open):
         """Scenario: Render cold start retries exhausted -> returns failure."""
         mock_resp_fail = MagicMock()
         mock_resp_fail.status = 503
 
-        mock_urlopen.return_value.__enter__.return_value = mock_resp_fail
+        mock_open.return_value.__enter__.return_value = mock_resp_fail
 
         with patch("time.sleep", return_value=None):
             ok, msg = self.client.verify_grid_endpoint(
@@ -520,7 +761,7 @@ class TestGeoShieldVerificationClient(unittest.TestCase):
 
         self.assertFalse(ok)
         self.assertIn("unavailable after 3 attempts", msg)
-        self.assertEqual(mock_urlopen.call_count, 3)
+        self.assertEqual(mock_open.call_count, 3)
 
 
 if __name__ == "__main__":

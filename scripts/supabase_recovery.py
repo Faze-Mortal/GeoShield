@@ -134,11 +134,59 @@ class SafeLogger:
         print(f"::error::{self.mask(msg)}", flush=True)
 
 
+class StrictNoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """
+    Rejects all HTTP redirect responses on authenticated requests to prevent
+    credential forwarding to unexpected hostnames, ports, or schemes.
+    Preserves default system TLS validation.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        # Explicitly refuse to construct a redirected request
+        return None
+
+    def http_error_301(self, req, fp, code, msg, headers):
+        raise urllib.error.HTTPError(
+            req.full_url,
+            code,
+            f"HTTP redirect (HTTP {code}) rejected for authenticated Supabase API call",
+            headers,
+            fp,
+        )
+
+    http_error_302 = http_error_301
+    http_error_303 = http_error_301
+    http_error_307 = http_error_301
+    http_error_308 = http_error_301
+
+
+class SafeRenderRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """
+    Ensures unauthenticated Render requests only follow same-host HTTPS redirects,
+    preventing protocol downgrades and unexpected cross-host URL traversal.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        orig_parsed = urllib.parse.urlparse(req.full_url)
+        new_parsed = urllib.parse.urlparse(newurl)
+
+        if new_parsed.scheme != "https":
+            raise urllib.error.HTTPError(
+                req.full_url, code, f"Insecure redirect scheme '{new_parsed.scheme}' rejected", headers, fp
+            )
+        if new_parsed.netloc.lower() != orig_parsed.netloc.lower():
+            raise urllib.error.HTTPError(
+                req.full_url, code, f"Cross-host redirect to '{new_parsed.netloc}' rejected", headers, fp
+            )
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 class SupabaseApiClient:
     """Interacts with the official Supabase Management API."""
 
-    def __init__(self, logger: SafeLogger) -> None:
+    def __init__(self, logger: SafeLogger, opener: Optional[urllib.request.OpenerDirector] = None) -> None:
         self.logger = logger
+        self.opener = opener or urllib.request.build_opener(StrictNoRedirectHandler)
 
     def get_project_status(self, project_ref: str, token: str) -> Tuple[int, Optional[str], Optional[str]]:
         """
@@ -154,7 +202,7 @@ class SupabaseApiClient:
         req = urllib.request.Request(url, headers=headers, method="GET")
 
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with self.opener.open(req, timeout=30) as resp:
                 status_code = resp.status
                 data = json.loads(resp.read().decode("utf-8"))
                 project_status = data.get("status")
@@ -166,6 +214,8 @@ class SupabaseApiClient:
             except Exception:
                 pass
 
+            if e.code in (301, 302, 303, 307, 308):
+                return e.code, None, f"Supabase API returned redirect (HTTP {e.code}). Redirects rejected for security."
             if e.code in (401, 403):
                 return e.code, None, f"Supabase API authentication/permission failure (HTTP {e.code}). Check SUPABASE_STATUS_TOKEN."
             if e.code == 404:
@@ -193,7 +243,7 @@ class SupabaseApiClient:
         req = urllib.request.Request(url, data=b"", headers=headers, method="POST")
 
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with self.opener.open(req, timeout=30) as resp:
                 if resp.status in (200, 201, 202):
                     return True, f"Supabase restoration request accepted (HTTP {resp.status})."
                 return True, f"Restoration request returned HTTP {resp.status}."
@@ -204,6 +254,8 @@ class SupabaseApiClient:
             except Exception:
                 pass
 
+            if e.code in (301, 302, 303, 307, 308):
+                return False, f"Supabase restore API returned redirect (HTTP {e.code}). Redirects rejected for security."
             if e.code in (401, 403):
                 return False, f"Supabase restore permission failure (HTTP {e.code}). Check SUPABASE_RESTORE_TOKEN permissions."
             if e.code == 409:
@@ -218,8 +270,9 @@ class SupabaseApiClient:
 class GeoShieldVerificationClient:
     """Exercises real database read through the GeoShield Backend API."""
 
-    def __init__(self, logger: SafeLogger) -> None:
+    def __init__(self, logger: SafeLogger, opener: Optional[urllib.request.OpenerDirector] = None) -> None:
         self.logger = logger
+        self.opener = opener or urllib.request.build_opener(SafeRenderRedirectHandler)
 
     def verify_grid_endpoint(
         self,
@@ -236,6 +289,10 @@ class GeoShieldVerificationClient:
         - FeatureCollection format (type == 'FeatureCollection' and isinstance(features, list))
         """
         endpoint = f"{base_url.rstrip('/')}/grid?limit=1"
+        parsed = urllib.parse.urlparse(endpoint)
+        if parsed.scheme != "https":
+            return False, f"Insecure scheme '{parsed.scheme}': GeoShield verification endpoint must use HTTPS"
+
         self.logger.info(f"Connecting to GeoShield verification endpoint: {endpoint}")
 
         headers = {
@@ -246,7 +303,7 @@ class GeoShieldVerificationClient:
         for attempt in range(1, retry_count + 1):
             req = urllib.request.Request(endpoint, headers=headers, method="GET")
             try:
-                with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+                with self.opener.open(req, timeout=timeout_sec) as resp:
                     status_code = resp.status
                     if status_code != 200:
                         self.logger.warning(
@@ -310,6 +367,7 @@ class SupabaseMonitorOrchestrator:
         self.logger = logger
         self.api_client = api_client or SupabaseApiClient(logger)
         self.verifier = verifier or GeoShieldVerificationClient(logger)
+        self.restore_attempted = False
 
     def run(self) -> int:
         """
@@ -350,9 +408,17 @@ class SupabaseMonitorOrchestrator:
             self.logger.notice(
                 f"Project is in transient transition state '{status}'. Polling until '{STATUS_ACTIVE_HEALTHY}'..."
             )
-            healthy = self._poll_until_healthy(current_status=status)
+            healthy, final_status = self._poll_until_healthy(current_status=status)
             if not healthy:
-                return 1
+                if final_status == STATUS_INACTIVE:
+                    self.logger.warning(
+                        f"Project settled into '{STATUS_INACTIVE}' from transient state '{status}'."
+                    )
+                    restored = self._handle_inactive_project()
+                    if not restored:
+                        return 1
+                else:
+                    return 1
 
         elif status == STATUS_INACTIVE:
             self.logger.warning("Supabase project is paused/inactive (status: INACTIVE).")
@@ -399,7 +465,11 @@ class SupabaseMonitorOrchestrator:
         Evaluates conditional auto-restore gates and executes restoration if authorized.
         Returns True if project reached ACTIVE_HEALTHY, False otherwise.
         """
-        can_auto_restore = self.config.enable_auto_restore and bool(self.config.restore_token)
+        if self.restore_attempted:
+            self.logger.error(
+                "Restoration was already attempted once during this run. Refusing duplicate restore request."
+            )
+            return False
 
         if not self.config.enable_auto_restore:
             self.logger.error(
@@ -417,7 +487,8 @@ class SupabaseMonitorOrchestrator:
             )
             return False
 
-        # Both gates passed: request restoration
+        # Both gates passed: mark attempt and request restoration
+        self.restore_attempted = True
         self.logger.notice(
             "Auto-restoration conditions met (ENABLE_SUPABASE_AUTO_RESTORE=true and restore token present). "
             f"Issuing restore request for project '{self.config.project_ref}'..."
@@ -431,12 +502,14 @@ class SupabaseMonitorOrchestrator:
             return False
 
         self.logger.info(f"Restoration request acknowledged: {msg}")
-        return self._poll_until_healthy(current_status="RESTORING")
+        healthy, _ = self._poll_until_healthy(current_status="RESTORING")
+        return healthy
 
-    def _poll_until_healthy(self, current_status: str) -> bool:
+    def _poll_until_healthy(self, current_status: str) -> Tuple[bool, str]:
         """
         Polls the project status every interval seconds until it reaches ACTIVE_HEALTHY
         or times out / reaches terminal failure.
+        Returns (is_healthy, final_status).
         """
         start_time = time.time()
         poll_interval = self.config.restore_poll_interval_sec
@@ -462,22 +535,42 @@ class SupabaseMonitorOrchestrator:
 
             if poll_status == STATUS_ACTIVE_HEALTHY:
                 self.logger.info(f"Restoration completed! Project is now {STATUS_ACTIVE_HEALTHY} (elapsed: {elapsed}s).")
-                return True
+                return True, STATUS_ACTIVE_HEALTHY
 
             if poll_status in FAILURE_OR_TERMINAL_STATUSES:
                 self.logger.error(
                     f"Project entered failure/terminal status during recovery: '{poll_status}'. Aborting."
                 )
-                return False
+                return False, poll_status
 
-            if poll_status not in TRANSIENT_STATUSES and poll_status != STATUS_INACTIVE:
+            if poll_status == STATUS_INACTIVE:
+                if self.restore_attempted or current_status == "RESTORING":
+                    # Once a restore request has been issued, Supabase may take several minutes to
+                    # transition out of INACTIVE into RESTORING or COMING_UP.
+                    # Continue polling for the full timeout duration without aborting early.
+                    self.logger.info(
+                        f"[{elapsed}s / {max_wait}s] Project still reports status '{STATUS_INACTIVE}' following restore request. Waiting for transition..."
+                    )
+                    continue
+                elif current_status in ("PAUSING", "GOING_DOWN"):
+                    self.logger.warning(
+                        f"Project completed shutdown/pause transition and is now INACTIVE (elapsed: {elapsed}s). Stopping polling."
+                    )
+                    return False, STATUS_INACTIVE
+                else:
+                    self.logger.warning(
+                        f"Project transitioned from '{current_status}' to '{STATUS_INACTIVE}' (elapsed: {elapsed}s). Stopping polling."
+                    )
+                    return False, STATUS_INACTIVE
+
+            if poll_status not in TRANSIENT_STATUSES:
                 self.logger.error(
                     f"Project entered unexpected status during recovery: '{poll_status}'. Aborting."
                 )
-                return False
+                return False, poll_status
 
         self.logger.error(f"Restoration timed out after {max_wait} seconds without reaching {STATUS_ACTIVE_HEALTHY}.")
-        return False
+        return False, "TIMEOUT"
 
 
 def main() -> int:

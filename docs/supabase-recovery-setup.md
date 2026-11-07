@@ -134,6 +134,12 @@ When both conditions (`ENABLE_SUPABASE_AUTO_RESTORE=true` and `SUPABASE_RESTORE_
   2. The workflow polls status every 30 seconds for up to 15 minutes.
   3. Once status transitions to `ACTIVE_HEALTHY`, it executes the `/grid?limit=1` database check to confirm full recovery.
 
+> [!CAUTION]
+> **Coarse Status vs. Webhook Reason Limitation**:
+> `GET /v1/projects/{ref}` returns only a coarse status string (`INACTIVE`) and does **not** disclose why the project was paused. Supabase's `v1.project.paused` webhook event includes a granular `reason` field (`inactivity`, `api_request`, or `other`), but status polling cannot distinguish between an automated inactivity pause and an intentional developer/admin pause via dashboard or API.
+>
+> If `ENABLE_SUPABASE_AUTO_RESTORE=true` is enabled, the workflow will attempt to restore the project regardless of whether it was paused due to inactivity or intentionally paused by a developer for maintenance or cost management. Keep `ENABLE_SUPABASE_AUTO_RESTORE=false` by default to avoid unintended restorations.
+
 ---
 
 ## 4. Manual Workflow Execution (`workflow_dispatch`)
@@ -198,3 +204,12 @@ The workflow explicitly categorizes and handles all 15 official Supabase Managem
 - Render free backend instances spin down after 15 minutes of inactivity.
 - First requests after spin-down experience a 30–60 second cold-start delay.
 - GeoShield's verification client incorporates bounded retries (up to 15 attempts with 8-second intervals, ~2 minutes total) to allow Render to wake up before reporting failure.
+
+### 5. Status-Only Monitoring vs. Webhook Pause Reason Limitations
+- **Coarse Status via Management API:** The workflow queries `GET https://api.supabase.com/v1/projects/{ref}`, which returns coarse project statuses (`ACTIVE_HEALTHY`, `INACTIVE`, etc.). It does not report *why* a project entered that status.
+- **Webhook Reason Contrast:** Supabase's event webhooks (specifically the `v1.project.paused` event) provide a granular `reason` payload:
+  - `inactivity`: The project was paused due to lack of API/database traffic.
+  - `api_request`: The project was paused explicitly via a Management API call.
+  - `other`: The project was paused manually via the Supabase Dashboard by an admin or team member.
+- **Inability to Distinguish Intentional Pauses:** Because the GitHub Actions polling workflow does not receive real-time webhooks, it cannot determine whether an `INACTIVE` status was caused by inactivity or an intentional manual pause by a developer.
+- **Safety Default:** Therefore, `ENABLE_SUPABASE_AUTO_RESTORE` is set to `false` by default so that GeoShield never overrides an intentional manual pause without explicit maintainer opt-in.
