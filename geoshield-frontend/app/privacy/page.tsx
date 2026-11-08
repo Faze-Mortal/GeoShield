@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'Privacy Notice — GeoShield',
   description:
     'Privacy notice for the GeoShield mountain landslide risk assessment and research platform.',
+  alternates: {
+    canonical: '/privacy',
+  },
 };
 
 export default function PrivacyPage() {
