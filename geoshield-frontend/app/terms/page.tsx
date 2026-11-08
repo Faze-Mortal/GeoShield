@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'Terms of Use & Scientific Limitations — GeoShield',
   description:
     'Terms of use, methodology caveats, and scientific limitations for GeoShield landslide risk assessment in Kullu & Mandi.',
+  alternates: {
+    canonical: '/terms',
+  },
 };
 
 export default function TermsPage() {
